@@ -1,0 +1,78 @@
+{
+  "types": [{
+      "newTypeName": "AccountName",
+      "type": "Name"
+    }
+  ],
+  "structs": [{
+      "name": "movepiece",
+      "base": "",
+      "fields": {
+        "matchid": "UInt64",
+
+        "steps": "UInt8[]",
+
+        "player": "AccountName"
+      }
+    },{
+      "name": "lol",
+      "base": "",
+      "fields": {
+      }
+    },{
+      "name": "newmatch",
+      "base": "",
+      "fields": {
+        "me": "AccountName",
+        "side": "UInt8",
+        "opponent": "AccountName"
+      }
+    },{
+      "name": "matches",
+      "fields": {
+        "matchid": "UInt64",
+        "white": "AccountName",
+        "black": "AccountName",
+        "status": "UInt8",
+        "lastmove": "UInt8",
+        "moveswhite": "UInt64",
+        "movesblack": "UInt64",
+        "board": "UInt8[]",
+        "matchstart": "UInt32",
+        "graveyard": "UInt8[]"
+      }
+    }
+  ],
+  "actions": [{
+      "action": "movepiece",
+      "type": "movepiece"
+    },{
+      "action": "newmatch",
+      "type": "newmatch"
+    },{
+      "action": "lol",
+      "type": "lol"
+    }
+  ],
+  "tables": [{
+      "table": "matches",
+      "type": "matches",
+      "indextype": "i64",
+      "keynames": [
+        "matchid",
+        "white",
+        "black",  
+        "status",
+        "lastmove",
+        "moveswhite",
+        "movesblack",
+        "board",
+        "matchstart",
+        "graveyard"
+      ],
+      "keytypes": [
+        "UInt64"
+      ]
+    }
+    ]
+}
