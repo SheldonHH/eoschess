@@ -19,6 +19,17 @@ void db_array_to_board(uint8_t (&board)[8][8], uint8_t (&db_array)[64]) {
   }
 }
 
+
+
+bool in_array(int (&arr)[], int size, int num) {
+  for (uint8_t i = 0; i < size; ++i) {
+    if (num == arr[i]) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void add_piece_config(uint8_t (&config_array)[6], const uint8_t (&piece_config)[6]) {
   for (uint8_t g = 0; g < 6; g++) {
     config_array[g] = piece_config[g];
@@ -105,7 +116,7 @@ void movepiece(Move_message message) {
     assert( piece_side(piece) == 1, "Piece belongs to opponent" );
   }
 
-  //piece side white 0 black 1,forward only,diagonal steps,vertical steps,horizontal steps,skip pieces
+  //piece side white 0 black 1,forward only,diagonal steps,vertical steps,horizontal steps,skip pieces(horse)
   uint8_t  piece_config[6];
   switch ( piece ) {
   case  11 ://king
@@ -132,8 +143,7 @@ void movepiece(Move_message message) {
   case  18 :
   case  37 :
   case  38 :
-    //special bois !!!!!!!!!!!!!!!
-    add_piece_config(piece_config, {piece, 0, 0,/*NO*/ 0, /*NO*/0, 1});
+    add_piece_config(piece_config, {piece, 0, 0, 2, 2, 1});
     break;
   case  19 ://pawns ♙
   case  20 :
@@ -152,76 +162,95 @@ void movepiece(Move_message message) {
   case  45 :
   case  46 :
     // ALSO special bois !!!!!!!!!!!!!!!
-    add_piece_config(piece_config, {piece, 1, 0/*maybe yes*/, 1, 0, 0});
+    add_piece_config(piece_config, {piece, 0, 0/*maybe yes*/, 1, 0, 0});
     break;
   }
 
-  uint8_t horizontal_steps = 0; uint8_t vertical_steps = 0; uint8_t diagonal_steps = 0;
+  uint8_t horizontal_steps = 0;
+  uint8_t vertical_steps = 0;
+  uint8_t diagonal_steps = 0;
+  uint8_t total_steps = 0;
   uint8_t last_position[2] = {message.steps[0], message.steps[1]};
 
-  for (uint8_t x = 2; x < message.steps_len; x += 2) {
-    int pospos[3] = { -1, 0, 1};
-    assert( (int)message.steps[x] - (int)last_position[0] > -2 && (int)message.steps[x] - (int)last_position[0] < 2, "Step is too far" );
-    assert( (int)message.steps[x + 1] - (int)last_position[1] > -2 && (int)message.steps[x + 1] - (int)last_position[1] < 2,"Step is too far" );
+  for (uint8_t x = 2; x < message.steps_len / 2; x += 2) {
 
+    assert( (int)message.steps[x] - (int)last_position[0] > -2 && (int)message.steps[x] - (int)last_position[0] < 2, "Vertical step is too far" );
+    assert( (int)message.steps[x + 1] - (int)last_position[1] > -2 && (int)message.steps[x + 1] - (int)last_position[1] < 2, "Horinzontal step is too far" );
 
-    // uint8_t step = board[message.steps[0]][message.steps[1]];
-    if (message.steps[x] != last_position[0] && message.steps[x + 1] != last_position[1]) {
-      diagonal_steps++;
-      assert(piece_config[2] >= diagonal_steps, "Piece cannot move diagonally");
+    if (message.steps[x] != last_position[0] && message.steps[x + 1] != last_position[1]) {//diagonal step
+      diagonal_steps++; total_steps++;
+      assert(piece_config[2] >= diagonal_steps, "Piece cannot move diagonally or has no more diagonal steps left");
     }
-    else if (message.steps[x] != last_position[0] && diagonal_steps == 0) {
-      vertical_steps++;
-      assert(piece_config[3] >= vertical_steps, "Piece cannot move vertically");
+    else if (message.steps[x] != last_position[0] && !diagonal_steps) {//vertical step
+
+      if (piece_config[5] && !vertical_steps && horizontal_steps) {
+        assert(horizontal_steps == 2, "Knight must have done two horizontal steps first");
+
+      }
+
+      vertical_steps++; total_steps++;
+
+      assert(piece_config[3] >= vertical_steps, "Piece cannot move vertically or has no more vertical steps left");
     }
-    else if (message.steps[x + 1] != last_position[1] && diagonal_steps == 0) {
-      horizontal_steps++;
-      assert(piece_config[4] <= horizontal_steps, "Piece cannot move horinzontally");
+    else if (message.steps[x + 1] != last_position[1] && !diagonal_steps) { //horizontal steps
+
+      if (piece_config[5] && !horizontal_steps && vertical_steps) {
+        assert(vertical_steps == 2 , "Knight must have done two vertical steps first");
+
+      }
+      horizontal_steps++; total_steps++;
+      assert(piece_config[4] <= horizontal_steps, "Piece cannot move horinzontally or has no more horizontal steps left");
     }
-    //made the move
 
-    uint8_t next_piece = board[message.steps[x]][message.steps[x + 1]];
+    if (piece_config[5] == 1 && total_steps < 3) {
+      //update last position
+      last_position[0] = message.steps[x];
+      last_position[1] = message.steps[x + 1];
+      continue;
+    }
 
-    if ( piece_side(next_piece) != 100) {//next piece is not empty
-      if (piece_side(next_piece) != playerside ) {
+    uint8_t occ_piece = board[message.steps[x]][message.steps[x + 1]];
 
+    if ( piece_side(occ_piece) != 100 ) {//next piece is not empty
+      if (piece_side(occ_piece) != playerside ) {
         for (uint8_t uu = 0; uu < 16; uu++) { //add to graveyard
           if (query.graveyard[uu] == 0) {
-            query.graveyard[uu] = next_piece;
-            board[message.steps[x]][message.steps[x + 1]] = 0;//remove from board
+            query.graveyard[uu] = occ_piece;
+            board[message.steps[x]][message.steps[x + 1]] = 0; //remove from board
             break;// end of graveyard loop
           }
         }
+        //change position on board
+        board[last_position[0]][last_position[1]] = 0;
+        board[message.steps[x]][message.steps[x + 1]] = piece;
         break;//end of steps loop
       }
       else {
-        assert(0, "Piece cannot move through your own pieces. You need to buy the jetpack dlc :)");
+        assert(false, "Piece cannot move through your own pieces.");
       }
+
     }
-    break;
+
+    //update last position
+    last_position[0] = message.steps[x];
+    last_position[1] = message.steps[x + 1];
+
+
+    //break;
 
   }
-//example move king:piece on 7,4 to 6,4
-  /*
-  message.steps = {7,4, 6,4}
-  4,3-3,4= 1,-1
-  4,3-4,4= 0,-1
-  4,3-4,2= 0,1
-  4,3-3,3= 1,0
-  4,3-3,2= 1,1
-  4,3-5,2= -1,1
 
-  */
   /*[ black
-  0 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
-  1 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
-  2 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
-  3 [ 0 , 1 ,|2|,|3|,|4|, 5 , 6 , 7 ],
-  4 [ 0 , 1 ,|2|,|3|,|4|, 5 , 6 , 7 ],
-  5 [ 0 , 1 ,|2|,|3|,|4|, 5 , 6 , 7 ],
-  6 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
-  7 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ]
-      0   1   2   3   4   5   6   7
+  0  [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
+  1  [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
+  2  [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
+  3  [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
+  4  [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
+  5  [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
+  6  [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
+  7  [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ]
+
+       0   1   2   3   4   5   6   7
   ] white
 
   */
