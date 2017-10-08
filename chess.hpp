@@ -9,15 +9,9 @@ struct PACKED( Newmatch_message ) {
 };
 struct PACKED( Move_message ) {
 	uint64_t	matchid;
-	//uint8_t pieceposition_len = 2;
-	//uint8_t pieceposition[2];
 	uint8_t steps_len = 16;
 	uint8_t steps[16];
-	//uint8_t   verticalsteps;
-	//uint8_t   horizontalsteps;
-	//uint8_t   diagonalsteps;
-	//uint8_t posvert;
-	//uint8_t poshor;
+
 	AccountName	player;
 };
 struct PACKED( match ) {
@@ -37,9 +31,6 @@ struct PACKED( match ) {
 
 typedef Table<N(chess), N(chess), N(matches), match, uint64_t> MainTable;
 
-//typedef Table<N(chess), N(chess), N(boards), board, uint64_t> BoardTable;
-//typedef Table<N(chess), N(chess), N(boards), board, char*> BoardTable;
-
 
  uint8_t FRESHBOARD [8][8] = {
 	//black
@@ -53,22 +44,5 @@ typedef Table<N(chess), N(chess), N(matches), match, uint64_t> MainTable;
 	{13, 17, 15, 12, 11, 16, 18, 14}
 	//white
 };
-/*const uint8_t WHITESIDE [16] = {
-	11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26
-}*/
 
-
-/*
-const char* FRESHBOARD2 [8][8] = {
-	//black
-	{"33", "37", "35", "32", "31", "36", "38", "34"},
-	{"39", "40", "41", "42", "43", "44", "45", "46"},
-	{"0", "0", "0", "0", "0", "0", "0", "0"},
-	{"0", "0", "0", "0", "0", "0", "0", "0"},
-	{"0", "0", "0", "0", "0", "0", "0", "0"},
-	{"0", "0", "0", "0", "0", "0", "0", "0"},
-	{"19", "20", "21", "22", "23", "24", "25", "26"},
-	{"13", "17", "15", "12", "11", "16", "18", "14"}
-	//white
-};
 */
