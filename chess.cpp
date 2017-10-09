@@ -199,7 +199,7 @@ void movepiece(Move_message message) {
 
       }
       horizontal_steps++; total_steps++;
-      assert(piece_config[4] <= horizontal_steps, "Piece cannot move horinzontally or has no more horizontal steps left");
+      assert(piece_config[4] >= horizontal_steps, "Piece cannot move horinzontally or has no more horizontal steps left");
     }
 
     if (piece_config[5] == 1 && total_steps < 3) {
