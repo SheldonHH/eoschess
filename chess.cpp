@@ -19,17 +19,6 @@ void db_array_to_board(uint8_t (&board)[8][8], uint8_t (&db_array)[64]) {
   }
 }
 
-
-
-bool in_array(int (&arr)[], int size, int num) {
-  for (uint8_t i = 0; i < size; ++i) {
-    if (num == arr[i]) {
-      return true;
-    }
-  }
-  return false;
-}
-
 void add_piece_config(uint8_t (&config_array)[6], const uint8_t (&piece_config)[6]) {
   for (uint8_t g = 0; g < 6; g++) {
     config_array[g] = piece_config[g];
