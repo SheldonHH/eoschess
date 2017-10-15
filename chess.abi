@@ -9,9 +9,7 @@
       "base": "",
       "fields": {
         "matchid": "UInt64",
-
         "steps": "UInt8[]",
-
         "player": "AccountName"
       }
     },{
@@ -34,12 +32,16 @@
         "white": "AccountName",
         "black": "AccountName",
         "status": "UInt8",
-        "lastmove": "UInt8",
+        "lastmoveside": "UInt8",
         "moveswhite": "UInt64",
         "movesblack": "UInt64",
         "board": "UInt8[]",
         "matchstart": "UInt32",
-        "graveyard": "UInt8[]"
+        "graveyard": "UInt8[]",
+        "lastmove": "UInt8[]",
+        "check": "UInt8",
+        "castling": "UInt8[]",
+        "kings": "UInt8[]"
       }
     }
   ],
@@ -63,12 +65,16 @@
         "white",
         "black",  
         "status",
-        "lastmove",
+        "lastmoveside",
         "moveswhite",
         "movesblack",
         "board",
         "matchstart",
-        "graveyard"
+        "graveyard",
+        "lastmove",
+        "check",
+        "castling",
+        "kings"
       ],
       "keytypes": [
         "UInt64"
