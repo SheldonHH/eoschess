@@ -93,10 +93,10 @@ void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_po
 
   uint8_t king = board[king_pos_vert][king_pos_hor];
   uint8_t kingside = piece_side(king);
-  uint8_t vert_plus_one = king_pos_vert+1;
-  uint8_t vert_minus_one = king_pos_vert-1;
-  uint8_t hor_plus_one = king_pos_hor+1;
-  uint8_t hor_minus_one = king_pos_hor-1;
+  uint8_t vert_plus_one = king_pos_vert + 1;
+  uint8_t vert_minus_one = king_pos_vert - 1;
+  uint8_t hor_plus_one = king_pos_hor + 1;
+  uint8_t hor_minus_one = king_pos_hor - 1;
 
   uint8_t directions [8][2] = {
     {vert_plus_one, king_pos_hor}, //vert_top
@@ -188,10 +188,7 @@ void newmatch(Newmatch_message message) {
   match a = {matchid, white, black, 0, 1, 0, 0};
   a.check = 10;
   a.matchstart = now();
-  a.kings[0] = 7;
-  a.kings[1] = 3;
-  a.kings[2] = 0;
-  a.kings[3] = 3;
+
   uint8_t b = 0;
   uint8_t g = 0;
   for (uint8_t i = 0; i < 64; i++) {
@@ -213,13 +210,17 @@ void newmatch(Newmatch_message message) {
     }
 
   }
+  a.kings[0] = 7;
+  a.kings[1] = 3;
+  a.kings[2] = 0;
+  a.kings[3] = 3;
   bool res =  MainTable::store(a);
 
   if (res == true) {
-    eos::print( "Created new board", "\n" );
+    eos::print( "Created new match", "\n" );
     //ask player2
   } else {
-    eos::print( "Couldnt create new board", "\n" );
+    eos::print( "Could not create new match", "\n" );
     //why?
   }
 
@@ -390,7 +391,7 @@ void movepiece(Move_message message) {
         assert(horizontal_steps == 2, "Knight must have done two horizontal steps first");
       }
       if (piece_config[1]) {
-        assert( piece_side(occ_piece) != 100, "Pawn can only move horinzontally if target field is not occupied");
+        assert( piece_side(occ_piece) == 100, "Pawn can only move horinzontally if target field is not occupied");
         if (!playerside) { //if white
           assert((int)message.steps[x] - (int)last_position[0] < 0, "Pawn can only move in opponents direction");
           if (last_position[0] == 6) {
@@ -454,6 +455,8 @@ void movepiece(Move_message message) {
           }
         }
       }
+
+
     }
 
     //update last position
@@ -464,7 +467,8 @@ void movepiece(Move_message message) {
     //break;
 
   }
-
+  board[last_position[0]][last_position[1]] = piece;
+  board[message.steps[0]][message.steps[1]] = 0;
   query.lastmove[0] = piece;
   query.lastmove[1] = message.steps[0];
   query.lastmove[2] = message.steps[1];
@@ -487,10 +491,66 @@ void movepiece(Move_message message) {
   }
 
   assert(!is_checked, "You cannot end your move if your king is in check");
+  query.lastmoveside = playerside;
+  uint8_t b = 0;
+  uint8_t g = 0;
+  for (uint8_t i = 0; i < 64; i++) {
+    query.board[i] = board[g][b];
+    printi((int)query.board[i]);
+    if (b == 7) {
+      g++;
+      b = 0;
+    } else {
+      b++;
+    }
+
+  }
+
+  printi(query.matchid);
+  eos::print(" matchid", "\n");
+  printn(query.white);
+  eos::print(" white", "\n");
+  printn(query.black);
+  eos::print(" black", "\n");
+  printi(query.status);
+  eos::print(" status", "\n");
+  printi(query.lastmoveside);
+  eos::print(" lastmoveside", "\n");
+  printi(query.moveswhite);
+  eos::print(" moveswhite", "\n");
+  printi(query.movesblack);
+  eos::print(" movesblack", "\n");
+  printi(query.matchstart);
+  eos::print(" matchstart", "\n");
+
+  printi(query.lastmove[0]);
+  printi(query.lastmove[1]);
+  printi(query.lastmove[2]);
+  printi(query.lastmove[3]);
+  printi(query.lastmove[4]);
+  eos::print(" lastmove", "\n");
+
+    printi(query.check);
+  eos::print(" check", "\n");
+  
+    printi(query.kings[0]);
+  printi(query.kings[1]);
+  printi(query.kings[2]);
+  printi(query.kings[3]);
+  eos::print(" kings", "\n");
 
 
-//IMPORTANT impl check method and after that castling
+  
+  //IMPORTANT impl check method and after that castling
+   bool res =  MainTable::update(query);
 
+    if (res == true) {
+      eos::print( "saved move", "\n" );
+      //ask player2
+    } else {
+      eos::print( "couldnt save move", "\n" );
+      //why?
+    }
 }
 
 
