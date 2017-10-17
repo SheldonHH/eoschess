@@ -28,18 +28,19 @@ struct PACKED( match ) {
 	uint8_t lastmoveside;// 0 white,1 black
 	uint64_t moveswhite;
 	uint64_t movesblack;
+	uint32_t matchstart;//unix
+	uint8_t check;
+	uint8_t kings_len = 4;
+	uint8_t kings[4];
 	uint8_t board_len = 64;
 	uint8_t board[64];
-	uint64_t matchstart;//unix
 	uint8_t graveyard_len = 16;
 	uint8_t graveyard[16];
 	uint8_t lastmove_len = 5;
 	uint8_t lastmove[5];// {piece, move_start_position_vertical, move_start_position_horizontal, move_end_position_vertical, move_end_position_horizontal}2 not possible bc of movement,0 still possible, 1 executed
-	uint8_t check;
 	uint8_t castling_len = 4;
 	uint8_t castling[4];// {long castle white, short castling white, long castle black, short castling black}
-	uint8_t kings_len = 4;
-	uint8_t kings[4];//white first
+
 };
 
 typedef Table<N(chess), N(chess), N(matches), match, uint64_t> MainTable;
