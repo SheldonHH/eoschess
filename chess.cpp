@@ -7,7 +7,6 @@
 void db_array_to_board(uint8_t (&board)[8][8], uint8_t (&db_array)[64]) {
   uint8_t b = 0;
   uint8_t g = 0;
-
   for (uint8_t i = 0; i < 64; i++) {
     board[g][b] = db_array[i];
     if (b == 7) {
@@ -90,38 +89,37 @@ uint8_t piece_side(uint8_t piece) {
 }
 
 void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_pos_hor, bool is_checked) {
-
   uint8_t king = board[king_pos_vert][king_pos_hor];
   uint8_t kingside = piece_side(king);
   uint8_t vert_plus_one = king_pos_vert + 1;
   uint8_t vert_minus_one = king_pos_vert - 1;
   uint8_t hor_plus_one = king_pos_hor + 1;
   uint8_t hor_minus_one = king_pos_hor - 1;
-
   uint8_t directions [8][2] = {
     {vert_plus_one, king_pos_hor}, //vert_top
     {vert_minus_one, king_pos_hor}, //vert_bottom
-    {king_pos_vert, hor_minus_one}, //hor_right
+    {king_pos_vert, hor_plus_one}, //hor_right
     {king_pos_vert, hor_minus_one}, //hor_left
     {vert_plus_one, hor_plus_one}, //diag_top_right
     {vert_plus_one, hor_minus_one}, //diag_top_left
     {vert_minus_one, hor_plus_one}, //diag_bottom_right
     {vert_minus_one, hor_minus_one} //diag_bottom_left
   };
-
   uint8_t hor, vert, p_side, direction;
-
   for (uint8_t j = 0; j < 8; j++) {
     vert = directions[j][0];
     hor = directions[j][1];
-
-
     for (uint8_t jj = 0; jj < 7; jj++) {
-
       p_side = piece_side(board[vert][hor]);
-
+      if (vert < 0 || vert > 7 || hor < 0 || hor > 7) {
+        break;
+      }
+      printi(vert);
+      eos::print("\n");
+      printi(hor);
+      eos::print("\n");
       if (p_side == 100) {
-        if (vert != king_pos_vert) {
+        if (vert != king_pos_vert ) {
           (vert > king_pos_vert) ? vert++ : vert--;
         }
         if (hor != king_pos_hor) {
@@ -160,13 +158,9 @@ void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_po
       else {
         break;
       }
-
     }//end step
-
-
   } //end direction
   //!check knight positions
-
 }
 
 void newmatch(Newmatch_message message) {
@@ -184,38 +178,57 @@ void newmatch(Newmatch_message message) {
     white = message.opponent;
     black = message.me;
   }
-
-  match a = {matchid, white, black, 0, 1, 0, 0};
+  match a;
+  a.matchid = matchid;
+  a.white = white;
+  a.black = black;
+  a.status = 0;// 0 started 1 accepted 2 tie 3 game over 4 aborted?
+  a.lastmoveside = 1;// 0 white,1 black
+  a.moveswhite = 0;
+  a.movesblack = 0;
+  a.matchstart = now();//unix
   a.check = 10;
-  a.matchstart = now();
-
+  a.kings[0] = 7;
+  a.kings[1] = 4;
+  a.kings[2] = 0;
+  a.kings[3] = 4;
   uint8_t b = 0;
   uint8_t g = 0;
   for (uint8_t i = 0; i < 64; i++) {
     a.board[i] = FRESHBOARD[g][b];
-    if (i < 16) {
-      a.graveyard[i] = 0;
-      if (i < 5) {
-        a.lastmove[i] = 0;
-        if (i < 4) {
-          a.castling[i] = 0;
-        }
-      }
-    }
     if (b == 7) {
       g++;
       b = 0;
     } else {
       b++;
     }
-
   }
-  a.kings[0] = 7;
-  a.kings[1] = 3;
-  a.kings[2] = 0;
-  a.kings[3] = 3;
+  a.graveyard[0] = 10;
+  a.graveyard[1] = 10;
+  a.graveyard[2] = 10;
+  a.graveyard[3] = 10;
+  a.graveyard[4] = 10;
+  a.graveyard[5] = 10;
+  a.graveyard[6] = 10;
+  a.graveyard[7] = 10;
+  a.graveyard[8] = 10;
+  a.graveyard[9] = 10;
+  a.graveyard[10] = 10;
+  a.graveyard[11] = 10;
+  a.graveyard[12] = 10;
+  a.graveyard[13] = 10;
+  a.graveyard[14] = 10;
+  a.graveyard[15] = 10;
+  a.lastmove[0] = 10;
+  a.lastmove[1] = 10;
+  a.lastmove[2] = 10;
+  a.lastmove[3] = 10;
+  a.lastmove[4] = 10;
+  a.castling[0] = 0;
+  a.castling[1] = 0;
+  a.castling[2] = 0;
+  a.castling[3] = 0;
   bool res =  MainTable::store(a);
-
   if (res == true) {
     eos::print( "Created new match", "\n" );
     //ask player2
@@ -223,43 +236,119 @@ void newmatch(Newmatch_message message) {
     eos::print( "Could not create new match", "\n" );
     //why?
   }
-
 }
 
-/*  void castling(Castling_message message) {
-    eos::requireAuth( message.player );
-    match query;
-    query.matchid = message.matchid;
-    bool matchexist = MainTable::get(query);
-    //assert status if match was accpected needs method too
-    assert( matchexist, "Match not found!" );
-    assert( query.white == message.player || query.black == message.player, "Player not found!" );
-    uint8_t playerside;
-    (query.white == message.player) ?  playerside = 0 : playerside = 1;
-    assert( playerside != query.lastmoveside, "It's not your turn!" );
-    if (message.type) { //if short castling
-      if (!playerside) { //if white
-        assert(!query.castling[1], "Short castling is not possible either because it has already been done or the rook or king have been moved");
-      }
-      else {
-        assert(!query.castling[3], "Short castling is not possible either because it has already been done or the rook or king have been moved");
-      }
+void castling(Castling_message message) {
+  eos::requireAuth( message.player );
+  match query;
+  query.matchid = message.matchid;
+  bool matchexist = MainTable::get(query);
+  //assert status if match was accpected needs method too
+  assert( matchexist, "Match not found!" );
+  assert( query.white == message.player || query.black == message.player, "Player not found!" );
+  uint8_t playerside;
+  (query.white == message.player) ?  playerside = 0 : playerside = 1;
+  assert( playerside != query.lastmoveside, "It's not your turn!" );
+  uint8_t board[8][8];
+  db_array_to_board(board, query.board);
+  bool is_checked = false;
+  if (message.type) { //if short castling
+    if (!playerside) { //if white
+      assert(!query.castling[1] && !board[7][5] && !board[7][6], "Short castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
+      detect_check(board, 7, 4, is_checked);
+      assert( !is_checked, "Cannot castle while checked" );
+      detect_check(board, 7, 5, is_checked);
+      detect_check(board, 7, 6, is_checked);
+      assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
+      detect_check(board, 7, 7, is_checked);
+      assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
+      board[7][4] = 0;
+      board[7][5] = 14;
+      board[7][6] = 11;
+      board[7][7] = 0;
+      query.castling[0] = 1;
+      query.castling[1] = 2;
+      query.kings[1] = 6;
     }
     else {
-      if (!playerside) {
-        assert(!query.castling[0], "Long castling is not possible either because it has already been done or the rook or king have been moved");
-      }
-      else {
-        assert(!query.castling[2], "Long castling is not possible either because it has already been done or the rook or king have been moved");
-      }
+      assert(!query.castling[3] && !board[0][5] && !board[0][6], "Short castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
+      detect_check(board, 0, 4, is_checked);
+      assert( !is_checked, "Cannot castle while checked" );
+      detect_check(board, 0, 5, is_checked);
+      detect_check(board, 0, 6, is_checked);
+      assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
+      detect_check(board, 0, 7, is_checked);
+      assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
+      board[0][4] = 0;
+      board[0][5] = 34;
+      board[0][6] = 31;
+      board[0][7] = 0;
+      query.castling[2] = 1;
+      query.castling[3] = 2;
+      query.kings[3] = 6;
     }
-    uint8_t board[8][8];
-    db_array_to_board(board, query.board);
-
-
-
-  }*/
-
+  }
+  else {
+    if (!playerside) {
+      assert(!query.castling[0] && !board[7][1] && !board[7][2] && !board[7][3], "Long castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
+      detect_check(board, 7, 4, is_checked);
+      assert( !is_checked, "Cannot castle while checked" );
+      detect_check(board, 7, 1, is_checked);
+      detect_check(board, 7, 2, is_checked);
+      detect_check(board, 7, 3, is_checked);
+      assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
+      detect_check(board, 7, 0, is_checked);
+      assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
+      board[7][4] = 0;
+      board[7][3] = 13;
+      board[7][2] = 11;
+      board[7][1] = 0;
+      board[7][0] = 0;
+      query.castling[0] = 2;
+      query.castling[1] = 1;
+      query.kings[1] = 2;
+    }
+    else {
+      assert(!query.castling[2] && !board[0][1] && !board[0][2] && !board[0][3], "Long castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
+      detect_check(board, 0, 4, is_checked);
+      assert( !is_checked, "Cannot castle while checked" );
+      detect_check(board, 0, 1, is_checked);
+      detect_check(board, 0, 2, is_checked);
+      detect_check(board, 0, 3, is_checked);
+      assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
+      detect_check(board, 0, 0, is_checked);
+      assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
+      board[0][4] = 0;
+      board[0][3] = 33;
+      board[0][2] = 31;
+      board[0][1] = 0;
+      board[0][0] = 0;
+      query.castling[2] = 2;
+      query.castling[3] = 1;
+      query.kings[3] = 2;
+    }
+  }
+  query.lastmoveside = playerside;
+  uint8_t b = 0;
+  uint8_t g = 0;
+  for (uint8_t i = 0; i < 64; i++) {
+    query.board[i] = board[g][b];
+    if (b == 7) {
+      g++;
+      b = 0;
+    } else {
+      b++;
+    }
+  }
+  bool res =  MainTable::update(query);
+  if (res == true) {
+    eos::print( "saved castling move", "\n" );
+    //ask player2
+  } else {
+    eos::print( "couldnt save castling move", "\n" );
+    //why?
+  }
+}
 
 void movepiece(Move_message message) {
   eos::requireAuth( message.player );
@@ -284,56 +373,43 @@ void movepiece(Move_message message) {
   bool king = false;
   //piece side white 0 black 1,forward only,diagonal steps,vertical steps,horizontal steps,skip pieces(horse)
   uint8_t  piece_config[6];
-  switch ( piece ) {
-  case  11 ://king
-    if (piece == 11) {query.castling[0] = 2; query.castling[1] = 2;}
-  case  31 :
-    if (piece == 31) {query.castling[2] = 2; query.castling[3] = 2;}
+  uint8_t piece_type = get_piece_type(piece);
+  switch (piece_type) {
+  case 0:
+    if (piece == 11) {
+      query.castling[0] = 2; query.castling[1] = 2;
+    }
+    else {
+      query.castling[2] = 2; query.castling[3] = 2;
+    }
     add_piece_config(piece_config, {piece, 0, 1, 1, 1, 0});
     king = true;
     break;
-  case  12 ://queen
-  case  32 :
+  case 1:
     add_piece_config(piece_config, {piece, 0, 7, 7, 7, 0});
     break;
-  case  13 ://rook ♖
-    if (piece == 13) {query.castling[0] = 2;}
-  case  14 :
-    if (piece == 14) {query.castling[1] = 2;}
-  case  33 :
-    if (piece == 33) {query.castling[3] = 2;}
-  case  34 :
-    if (piece == 34) {query.castling[2] = 2;}
+  case 2:
+    if (piece == 13) {
+      query.castling[0] = 2;
+    }
+    else if (piece == 14) {
+      query.castling[1] = 2;
+    }
+    else if (piece == 33) {
+      query.castling[3] = 2;
+    }
+    else if (piece == 34) {
+      query.castling[2] = 2;
+    }
     add_piece_config(piece_config, {piece, 0, 0, 7, 7, 0});
     break;
-  case  15 ://bishops ♗
-  case  16 :
-  case  35 :
-  case  36 :
+  case 3:
     add_piece_config(piece_config, {piece, 0, 7, 0, 0, 0});
     break;
-  case  17 ://knights ♘
-  case  18 :
-  case  37 :
-  case  38 :
+  case 4:
     add_piece_config(piece_config, {piece, 0, 0, 2, 2, 1});
     break;
-  case  19 ://pawns ♙
-  case  20 :
-  case  21 :
-  case  22 :
-  case  23 :
-  case  24 :
-  case  25 :
-  case  26 :
-  case  39 :
-  case  40 :
-  case  41 :
-  case  42 :
-  case  43 :
-  case  44 :
-  case  45 :
-  case  46 :
+  case 5:
     // ALSO special bois !!!!!!!!!!!!!!!impl pawn promotion
     add_piece_config(piece_config, {piece, 1, 1, 1, 0, 0});
     break;
@@ -347,15 +423,12 @@ void movepiece(Move_message message) {
   bool is_checked = false;
   uint8_t en_passant = 0;
   for (uint8_t x = 2; x < message.steps_len / 2; x += 2) {
-    if (message.steps[x] == 10) {break;} //as for now 10 means end of steps
+    if (message.steps[x] > 7) {break;} //as for now 10 means end of steps
     uint8_t occ_piece = board[message.steps[x]][message.steps[x + 1]];
-
     assert( (int)message.steps[x] - (int)last_position[0] > -2 && (int)message.steps[x] - (int)last_position[0] < 2, "Vertical step is too far" );
     assert( (int)message.steps[x + 1] - (int)last_position[1] > -2 && (int)message.steps[x + 1] - (int)last_position[1] < 2, "Horinzontal step is too far" );
-
     if (message.steps[x] != last_position[0] && message.steps[x + 1] != last_position[1]) { //diagonal step
       if (piece_config[1]) {
-
         if (!playerside) { //if white
           assert((int)message.steps[x] - (int)last_position[0] < 0, "Pawn can only move in opponents direction");
           if (piece_side(occ_piece) == 100) { //if empty
@@ -366,8 +439,8 @@ void movepiece(Move_message message) {
           else {
             assert(piece_side(occ_piece) , "Pawn can only move diagonally if an opponent piece is occupying the target field or in an en passant situation");
           }
-
-        } else {
+        }
+        else {
           assert((int)message.steps[x] - (int)last_position[0] > 0, "Pawn can only move in opponents direction");
           if (piece_side(occ_piece) == 100) { //if empty
             //en passant
@@ -377,16 +450,13 @@ void movepiece(Move_message message) {
           else {
             assert(!piece_side(occ_piece), "Pawn can only move diagonally if an opponent piece is occupying the target field or in an en passant situation");
           }
-
         }
         piece_config[3] = 0;//remove vertical step
       }
-
       diagonal_steps++; total_steps++;
       assert(piece_config[2] >= diagonal_steps, "Piece cannot move diagonally or has no more diagonal steps left");
     }
     else if (message.steps[x] != last_position[0] && !diagonal_steps && message.steps[x + 1] == last_position[1]) { //vertical step
-
       if (piece_config[5] && !vertical_steps && horizontal_steps) {
         assert(horizontal_steps == 2, "Knight must have done two horizontal steps first");
       }
@@ -397,36 +467,31 @@ void movepiece(Move_message message) {
           if (last_position[0] == 6) {
             piece_config[3] = 2; //increase to two steps
           }
-        } else {
+        }
+        else {
           assert((int)message.steps[x] - (int)last_position[0] > 0, "Pawn can only move in opponents direction");
           if (last_position[0] == 1) {
             piece_config[3] = 2; //increase to two steps
           }
         }
-
         piece_config[2] = 0;//remove diagonal step
       }
-
       vertical_steps++; total_steps++;
       assert(piece_config[3] >= vertical_steps, "Piece cannot move vertically or has no more vertical steps left");
     }
     else if (message.steps[x + 1] != last_position[1] && !diagonal_steps && message.steps[x] == last_position[0]) { //horizontal step
-
       if (piece_config[5] && !horizontal_steps && vertical_steps) {
         assert(vertical_steps == 2 , "Knight must have done two vertical steps first");
       }
       horizontal_steps++; total_steps++;
-
       assert(piece_config[4] >= horizontal_steps, "Piece cannot move horinzontally or has no more horizontal steps left");
     }
-
     if (piece_config[5] && total_steps < 3) {//knight is not fnished
       //update last position
       last_position[0] = message.steps[x];
       last_position[1] = message.steps[x + 1];
       continue;
     }
-
     if (piece_side(occ_piece) != 100) {//next piece is not empty
       if (piece_side(occ_piece) != playerside) {
         for (uint8_t uu = 0; uu < 16; uu++) { //add to graveyard
@@ -455,17 +520,11 @@ void movepiece(Move_message message) {
           }
         }
       }
-
-
     }
-
     //update last position
     last_position[0] = message.steps[x];
     last_position[1] = message.steps[x + 1];
-
-
     //break;
-
   }
   board[last_position[0]][last_position[1]] = piece;
   board[message.steps[0]][message.steps[1]] = 0;
@@ -474,7 +533,11 @@ void movepiece(Move_message message) {
   query.lastmove[2] = message.steps[1];
   query.lastmove[3] = last_position[0];
   query.lastmove[4] = last_position[1];
-
+  query.lastmove[0] = piece;
+  query.lastmove[1] = message.steps[0];
+  query.lastmove[2] = message.steps[1];
+  query.lastmove[3] = last_position[0];
+  query.lastmove[4] = last_position[1];
   if (!playerside) {
     if (king) {
       query.kings[0] = last_position[0];
@@ -489,7 +552,6 @@ void movepiece(Move_message message) {
     }
     detect_check(board, query.kings[2], query.kings[3], is_checked);
   }
-
   assert(!is_checked, "You cannot end your move if your king is in check");
   query.lastmoveside = playerside;
   uint8_t b = 0;
@@ -503,9 +565,7 @@ void movepiece(Move_message message) {
     } else {
       b++;
     }
-
   }
-
   printi(query.matchid);
   eos::print(" matchid", "\n");
   printn(query.white);
@@ -522,86 +582,37 @@ void movepiece(Move_message message) {
   eos::print(" movesblack", "\n");
   printi(query.matchstart);
   eos::print(" matchstart", "\n");
-
   printi(query.lastmove[0]);
   printi(query.lastmove[1]);
   printi(query.lastmove[2]);
   printi(query.lastmove[3]);
   printi(query.lastmove[4]);
   eos::print(" lastmove", "\n");
-
-    printi(query.check);
+  printi(query.check);
   eos::print(" check", "\n");
-  
-    printi(query.kings[0]);
+  printi(query.kings[0]);
   printi(query.kings[1]);
   printi(query.kings[2]);
   printi(query.kings[3]);
   eos::print(" kings", "\n");
-
-
-  
   //IMPORTANT impl check method and after that castling
-   bool res =  MainTable::update(query);
-
-    if (res == true) {
-      eos::print( "saved move", "\n" );
-      //ask player2
-    } else {
-      eos::print( "couldnt save move", "\n" );
-      //why?
-    }
+  bool res =  MainTable::update(query);
+  if (res == true) {
+    eos::print( "saved move", "\n" );
+    //ask player2
+  } else {
+    eos::print( "couldnt save move", "\n" );
+    //why?
+  }
 }
-
-
 
 extern "C" {
 
   void init()  {
-    /*  eos::print( "....................................................................................................", "\n" );
-      eos::print( "....................................................................................................", "\n" );
-      eos::print( "...................................----:::://///::::---.............................................", "\n" );
-      eos::print( "..............................--://++ooooooooooooooo+++//:--........................................", "\n" );
-      eos::print( "...........................-:/++oossssssssssssssssssssoooo++/:-....................................." , "\n");
-      eos::print( "........................-:/+oos+-..........syyyyyyysso.........-:-..................................", "\n" );
-      eos::print( ".............--.......-:+oosssy+`.``..-::/+yyyyyyyyyyo/:--.````.+/:-................................", "\n" );
-      eos::print( ".....:-....:sdho-....:+osssyyyyyo+syyyyyyyyyyyyyyyyyyssssssso+/+oo++:-..............................", "\n" );
-      eos::print( "...-ydho--sdddh+...-/ossyyyyyyyyyyyssssssssssssyyyyyysssooo++ooooooo+/-.............................", "\n" );
-      eos::print( "...+hdho-/ddy+-.-://+syyyyyyyyyyssoooooooooooossyyyyssoooo++///++oooo++:............................" , "\n");
-      eos::print( "...ohhs/.+dho-/hdmmdy++syyyyyysoooo+++++ossoo++osysssssssso/:----/+oooo+:...........................", "\n" );
-      eos::print( ".../hdhs-/ds-odhhoodmds-ssso+/-.`         `.-://osssso+:.`         `.-::-.``........................", "\n" );
-      eos::print( "...:yhyo:-yy-ss.-.`.::.         ``    ``        `--.`   `````````          `........................", "\n" );
-      eos::print( "..../hdho-`-`-.-+ssssys-:-     ``````````````         ``````````````    -/:`........................", "\n" );
-      eos::print( "....ohdhs:`  ``/+ooohds-sy/   ````````````````    -   ` ````````````   `o+/`........................", "\n" );
-      eos::print( "...:yddhs:` ./hddhhddy+/yyy`   ````````````````  `:   ` ```````````` ` :o+/.........................", "\n" );
-      eos::print( "..-ohddho-`/+ohdmmdy//yyyyy+     ````````````` ` +o`    ``````````.```:so+/.........................", "\n" );
-      eos::print( "..-shhhy+.-s+/oyys++syyyyyyyo`    `````````.````+yys.    ````````````+ssso/.........................", "\n" );
-      eos::print( ".-/+oss+.`//-.-/+osyyyyyyyyyys/`       ```````:syyyyy/.          `./ssssso:.........................", "\n" );
-      eos::print( ".-+yhys+.`....-/+ossyyssyyyyyyys+:.      `.:+yyyyyyyyyso/:-....-://:/osss+-.........................", "\n" );
-      eos::print( "....-::-......./++osssoo/-:/++oooosssoooossssssssssssoooo++//:::..:+++sss+.............---..........", "\n" );
-      eos::print( "...............:/++ossooosso//sd++sss+osssooooo++oooo+osso:ss::::osssssso:............:hdho.........", "\n" );
-      eos::print( "...............-:/+osssyyyyyyso+:/syhoyhdhyshhys+yyys+sys+:o+:+osooooooo+............`/ydds.........", "\n" );
-      eos::print( "................-//+osssyyyyyyyys+ohh/syhy+ohhyo:yhhy+hdhs+ds+so++ooooo+-............`+hdds.........", "\n" );
-      eos::print( ".................://+ossyyyyyyyyyysossdNNmhdNNmhyNNmdsNmho/ooo+/+oooo++:..............ohhy+.........", "\n" );
-      eos::print( "..................:/+osssyyyyyssssyyysosyyshdmdysdddy+ysoooo+//+oo+++/-...............+yddy-........", "\n" );
-      eos::print( "...................-/+oosssssyysso+osssyyssooooo++ooooosoo+::+ooo++/:-..............`-::-:+o//::-...", "\n" );
-      eos::print( "....................-:/+ooosssssssso+++ossssyysssssssoo+///+oo+++/:-...............:./: .ohdddddds-.", "\n" );
-      eos::print( "......................-:/+oooosssssssso+++++oooooo+++///++++++//:-................o/:/+`.+ydddddhs-." , "\n");
-      eos::print( "........................-:/++oooooooooooooooo++++++++++++++//::-..................hy//:--:://///:...", "\n" );
-      eos::print( "...........................-://++++ooooooooo++++++++++////:--.....................s:...::+sdmddddh+." , "\n");
-      eos::print( "..............................--::////+++++++++/////:::--.........................--`:/-.:shddhdddo.", "\n" );
-      eos::print( "....................................--------------....................................`.+ossso+/:-..", "\n" );
-      eos::print( "......................................................................................`/ydmmmmmd+...", "\n" );
-      eos::print( "........................................................................................:+osssso-...", "\n" );
-      eos::print( "....................................................................................................", "\n" );
-      eos::print( "....................................................................................................", "\n" );
-      eos::print( "....................................................................................................", "\n" );*/
-  }
 
+  }
   /// The apply method implements the dispatch of events to this contract
   void apply( uint64_t code, uint64_t action ) {
-
-
     if ( code == N(chess) ) {
       switch ( action ) {
       case N( newmatch ):
@@ -612,15 +623,14 @@ extern "C" {
         eos::print("action movepiece ", "\n");
         movepiece( eos::currentMessage<Move_message>() );
         break;
-      /*case N( castling ):
+      case N( castling ):
         eos::print("action castling ", "\n");
         castling( eos::currentMessage<Castling_message>() );
-        break;*/
+        break;
       default :
         assert( false, "unknown action" );
       }
     }
-
   }
 } // extern "C"
 
@@ -628,14 +638,14 @@ extern "C" {
 
 /*
 [ black
-0 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
-1 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
+0 [ 0 , 1 ,.2 , 3 , 4 , 5 , 6 , 7 ],
+1 [ 0 , 1 , 2 ,.3 , 4 , 5 , 6 , 7 ],
 2 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
 3 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
 4 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
 5 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
-6 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
-7 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ]
+6 [ 0 , 1 ,.2 ,.3 ,.4 , 5 , 6 , 7 ],
+7 [ 0 , 1 ,.2 , 3 , 4 , 5 , 6 , 7 ]
 ] white
 
 white pieces
