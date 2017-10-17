@@ -35,13 +35,14 @@
         "lastmoveside": "UInt8",
         "moveswhite": "UInt64",
         "movesblack": "UInt64",
-        "board": "UInt8[]",
         "matchstart": "UInt32",
+        "check": "UInt8",
+        "kings": "UInt8[]",
+        "board": "UInt8[]",
         "graveyard": "UInt8[]",
         "lastmove": "UInt8[]",
-        "check": "UInt8",
-        "castling": "UInt8[]",
-        "kings": "UInt8[]"
+        "castling": "UInt8[]"
+
       }
     }
   ],
@@ -68,13 +69,14 @@
         "lastmoveside",
         "moveswhite",
         "movesblack",
-        "board",
         "matchstart",
+        "check",
+        "kings",
+        "board",
         "graveyard",
         "lastmove",
-        "check",
-        "castling",
-        "kings"
+        "castling"
+
       ],
       "keytypes": [
         "UInt64"
