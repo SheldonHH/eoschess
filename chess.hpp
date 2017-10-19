@@ -3,7 +3,7 @@
 
 
 struct PACKED( Newmatch_message ) {
-	AccountName me;
+	AccountName player;
 	uint8_t side;//0white
 	AccountName opponent;
 };
@@ -49,10 +49,10 @@ typedef Table<N(chess), N(chess), N(matches), match, uint64_t> MainTable;
 uint8_t FRESHBOARD [8][8] = {
 	{33, 37, 35, 32, 31, 36, 38, 34},
 	{39, 40, 41, 42, 43, 44, 45, 46},
-	{0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0},
+	{ 0 , 0 , 0 , 0, 0 , 0 , 0 , 0},
+	{ 0 , 0 , 0 , 0, 0 , 0 , 0 , 0},
+	{ 0 , 0 , 0 , 0, 0 , 0 , 0 , 0},
+	{ 0 , 0 , 0 , 0, 0 , 0 , 0 , 0},
 	{19, 20, 21, 22, 23, 24, 25, 26},
 	{13, 17, 15, 12, 11, 16, 18, 14}
 };
