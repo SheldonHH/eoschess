@@ -13,6 +13,14 @@
         "player": "AccountName"
       }
     },{
+      "name": "castling",
+      "base": "",
+      "fields": {
+        "matchid": "UInt64",
+        "type": "UInt8",
+        "player": "AccountName"
+      }
+    },{
       "name": "lol",
       "base": "",
       "fields": {
@@ -55,6 +63,9 @@
     },{
       "action": "lol",
       "type": "lol"
+    },{
+      "action": "castling",
+      "type": "castling"
     }
   ],
   "tables": [{
