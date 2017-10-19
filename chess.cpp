@@ -164,7 +164,7 @@ void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_po
 }
 
 void newmatch(Newmatch_message message) {
-  eos::requireAuth( message.me );
+  eos::requireAuth( message.player );
   uint64_t matchid;
   match query;
   bool lastmatch = MainTable::back(query);
@@ -172,11 +172,11 @@ void newmatch(Newmatch_message message) {
   uint64_t white;
   uint64_t black;
   if (message.side == 0) {
-    white = message.me;
+    white = message.player;
     black = message.opponent;
   } else {
     white = message.opponent;
-    black = message.me;
+    black = message.player;
   }
   match a;
   a.matchid = matchid;
@@ -634,41 +634,3 @@ extern "C" {
   }
 } // extern "C"
 
-
-
-/*
-[ black
-0 [ 0 , 1 ,.2 , 3 , 4 , 5 , 6 , 7 ],
-1 [ 0 , 1 , 2 ,.3 , 4 , 5 , 6 , 7 ],
-2 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
-3 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
-4 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
-5 [ 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 ],
-6 [ 0 , 1 ,.2 ,.3 ,.4 , 5 , 6 , 7 ],
-7 [ 0 , 1 ,.2 , 3 , 4 , 5 , 6 , 7 ]
-] white
-
-white pieces
-king 11
-queen 12
-rooks 13,14
-bishops 15,16
-knights 17,18
-pawns 19,20,21,22,23,24,25,26
-
-black pieces
-king 31
-queen 32
-rooks 33,34
-bishops 35,36
-knights 37,38
-pawns 39,40,41,42,43,44,45,46
-
-
-1 king
-1 queen
-2 rooks
-2 bishops
-2 knights
-8 pawns
-*/
