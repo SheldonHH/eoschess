@@ -29,7 +29,7 @@
       "name": "newmatch",
       "base": "",
       "fields": {
-        "me": "AccountName",
+        "player": "AccountName",
         "side": "UInt8",
         "opponent": "AccountName"
       }
