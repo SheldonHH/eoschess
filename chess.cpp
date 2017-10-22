@@ -30,39 +30,21 @@ uint8_t get_piece_type(uint8_t piece) {
     r = 1;
     break;
   case  13 ://rook ♖
-  case  14 :
   case  33 :
-  case  34 :
+  case  37 :
+  case  17 :
     r = 2;
     break;
-  case  15 ://bishops ♗
-  case  16 :
-  case  35 :
-  case  36 :
+  case  14 ://bishops ♗
+  case  34 :
     r = 3;
     break;
-  case  17 ://knights ♘
-  case  18 :
-  case  37 :
-  case  38 :
+  case  15 ://knights ♘
+  case  35 :
     r = 4;
     break;
-  case  19 ://pawns ♙
-  case  20 :
-  case  21 :
-  case  22 :
-  case  23 :
-  case  24 :
-  case  25 :
-  case  26 :
-  case  39 :
-  case  40 :
-  case  41 :
-  case  42 :
-  case  43 :
-  case  44 :
-  case  45 :
-  case  46 :
+  case  16 ://pawns ♙
+  case  36 :
     r = 5;
     break;
   }
@@ -74,14 +56,14 @@ void add_piece_config(uint8_t (&config_array)[6], const uint8_t (&piece_config)[
     config_array[g] = piece_config[g];
   }
   uint8_t x = piece_config[0];
-  (x > 10 && x < 27) ? x = 0 : x = 1;
+  (x > 10 && x < 18) ? x = 0 : x = 1;
   config_array[0] = x;
 }
 
 uint8_t piece_side(uint8_t piece) {
   if (piece != 0) {
     uint8_t x;
-    (piece > 10 && piece < 27) ? x = 0 : x = 1;
+    (piece > 10 && piece < 18) ? x = 0 : x = 1;
     return x;
   } else {
     return 100;
@@ -89,8 +71,7 @@ uint8_t piece_side(uint8_t piece) {
 }
 
 void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_pos_hor, bool is_checked) {
-  uint8_t king = board[king_pos_vert][king_pos_hor];
-  uint8_t kingside = piece_side(king);
+  uint8_t kingside = piece_side(board[king_pos_vert][king_pos_hor]);
   uint8_t vert_plus_one = king_pos_vert + 1;
   uint8_t vert_minus_one = king_pos_vert - 1;
   uint8_t hor_plus_one = king_pos_hor + 1;
@@ -114,10 +95,6 @@ void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_po
       if (vert < 0 || vert > 7 || hor < 0 || hor > 7) {
         break;
       }
-      printi(vert);
-      eos::print("\n");
-      printi(hor);
-      eos::print("\n");
       if (p_side == 100) {
         if (vert != king_pos_vert ) {
           (vert > king_pos_vert) ? vert++ : vert--;
@@ -160,7 +137,87 @@ void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_po
       }
     }//end step
   } //end direction
-  //!check knight positions
+  //check knight positions
+  uint8_t bad_boi;
+  if (king_pos_vert > 1) {
+    bad_boi = board[king_pos_vert - 2][king_pos_hor + 1];
+    if (get_piece_type(bad_boi) == 4 && piece_side(bad_boi) != kingside) {
+      is_checked = true;
+      return;
+    }
+    bad_boi = board[king_pos_vert - 2][king_pos_hor - 1];
+    if (get_piece_type(bad_boi) == 4 && piece_side(bad_boi) != kingside) {
+      is_checked = true;
+      return;
+    }
+  }
+  if (king_pos_vert < 6) {
+    bad_boi = board[king_pos_vert + 2][king_pos_hor + 1];
+    if (get_piece_type(bad_boi) == 4 && piece_side(bad_boi) != kingside) {
+      is_checked = true;
+      return;
+    }
+    bad_boi = board[king_pos_vert + 2][king_pos_hor - 1];
+    if (get_piece_type(bad_boi) == 4 && piece_side(bad_boi) != kingside) {
+      is_checked = true;
+      return;
+    }
+  }
+  if (king_pos_hor < 6) {
+    bad_boi = board[king_pos_vert + 1][king_pos_hor + 2];
+    if (get_piece_type(bad_boi) == 4 && piece_side(bad_boi) != kingside) {
+      is_checked = true;
+      return;
+    }
+    bad_boi = board[king_pos_vert - 1][king_pos_hor + 2];
+    if (get_piece_type(bad_boi) == 4 && piece_side(bad_boi) != kingside) {
+      is_checked = true;
+      return;
+    }
+  }
+  if (king_pos_hor > 1) {
+    bad_boi = board[king_pos_vert + 1][king_pos_hor - 2];
+    if (get_piece_type(bad_boi) == 4 && piece_side(bad_boi) != kingside) {
+      is_checked = true;
+      return;
+    }
+    bad_boi = board[king_pos_vert - 1][king_pos_hor - 2];
+    if (get_piece_type(bad_boi) == 4 && piece_side(bad_boi) != kingside) {
+      is_checked = true;
+      return;
+    }
+  }
+}
+
+void acceptmatch( Acceptmatch_message message ) {
+  eos::requireAuth( message.player );
+  match query;
+  query.matchid = message.matchid;
+  bool find_match = MainTable::get(query);
+  assert(find_match, "Could not find match");
+  assert(query.white == message.player || query.black == message.player, "Could not find player in this match");
+  assert(!query.status, "The match has already started or is over");
+  assert(message.accept = 1 || message.accept == 2, "You can either accept(1) or deny(2) the match request");
+  query.status = message.accept;
+  query.matchstart = now();
+  query.lastmovetime = now();
+  bool update_status = MainTable::update(query);
+  assert(update_status, "Could not update match status");
+}
+
+void claimwin( Claimwin_message message ) {
+  eos::requireAuth( message.player );
+  match query;
+  query.matchid = message.matchid;
+  bool find_match = MainTable::get(query);
+  assert(find_match, "Could not find match");
+  assert(query.white == message.player || query.black == message.player, "Could not find player in this match");
+  assert(query.status == 1, "The match is already over or has not been started");
+  uint32_t time = now();
+  assert(time >= query.lastmovetime + query.maxmoveinterval, "Your opponent still has time left to make a move");
+  query.status = 3;
+  bool update_status = MainTable::update(query);
+  assert(update_status, "Could not update match status");
 }
 
 void newmatch(Newmatch_message message) {
@@ -171,6 +228,7 @@ void newmatch(Newmatch_message message) {
   (lastmatch) ? matchid = query.matchid + 1 : matchid = 0 ;
   uint64_t white;
   uint64_t black;
+  assert(message.maxmoveinterval, "You have to specify a max move interval in seconds");
   if (message.side == 0) {
     white = message.player;
     black = message.opponent;
@@ -179,6 +237,7 @@ void newmatch(Newmatch_message message) {
     black = message.player;
   }
   match a;
+  a.maxmoveinterval = message.maxmoveinterval;
   a.matchid = matchid;
   a.white = white;
   a.black = black;
@@ -186,16 +245,26 @@ void newmatch(Newmatch_message message) {
   a.lastmoveside = 1;// 0 white,1 black
   a.moveswhite = 0;
   a.movesblack = 0;
-  a.matchstart = now();//unix
+  a.matchstart = 0;
   a.check = 10;
   a.kings[0] = 7;
   a.kings[1] = 4;
   a.kings[2] = 0;
   a.kings[3] = 4;
+  uint8_t new_board [8][8] = {
+    {37, 35, 34, 32, 31, 34, 35, 33},
+    {36, 36, 36, 36, 36, 36, 36, 36},
+    { 0 , 0 , 0 , 0, 0 , 0 , 0 , 0},
+    { 0 , 0 , 0 , 0, 0 , 0 , 0 , 0},
+    { 0 , 0 , 0 , 0, 0 , 0 , 0 , 0},
+    { 0 , 0 , 0 , 0, 0 , 0 , 0 , 0},
+    {16, 16, 16, 16, 16, 16, 16, 16},
+    {17, 15, 14, 12, 11, 14, 15, 13}
+  };
   uint8_t b = 0;
   uint8_t g = 0;
   for (uint8_t i = 0; i < 64; i++) {
-    a.board[i] = FRESHBOARD[g][b];
+    a.board[i] = new_board[g][b];
     if (b == 7) {
       g++;
       b = 0;
@@ -203,22 +272,6 @@ void newmatch(Newmatch_message message) {
       b++;
     }
   }
-  a.graveyard[0] = 10;
-  a.graveyard[1] = 10;
-  a.graveyard[2] = 10;
-  a.graveyard[3] = 10;
-  a.graveyard[4] = 10;
-  a.graveyard[5] = 10;
-  a.graveyard[6] = 10;
-  a.graveyard[7] = 10;
-  a.graveyard[8] = 10;
-  a.graveyard[9] = 10;
-  a.graveyard[10] = 10;
-  a.graveyard[11] = 10;
-  a.graveyard[12] = 10;
-  a.graveyard[13] = 10;
-  a.graveyard[14] = 10;
-  a.graveyard[15] = 10;
   a.lastmove[0] = 10;
   a.lastmove[1] = 10;
   a.lastmove[2] = 10;
@@ -231,7 +284,7 @@ void newmatch(Newmatch_message message) {
   bool res =  MainTable::store(a);
   if (res == true) {
     eos::print( "Created new match", "\n" );
-    //ask player2
+    //requireNotice(N(Account1)); ?
   } else {
     eos::print( "Could not create new match", "\n" );
     //why?
@@ -243,7 +296,7 @@ void castling(Castling_message message) {
   match query;
   query.matchid = message.matchid;
   bool matchexist = MainTable::get(query);
-  //assert status if match was accpected needs method too
+  assert( query.status == 1, "Match was not accepted or is already over" );
   assert( matchexist, "Match not found!" );
   assert( query.white == message.player || query.black == message.player, "Player not found!" );
   uint8_t playerside;
@@ -263,7 +316,7 @@ void castling(Castling_message message) {
       detect_check(board, 7, 7, is_checked);
       assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
       board[7][4] = 0;
-      board[7][5] = 14;
+      board[7][5] = 13;
       board[7][6] = 11;
       board[7][7] = 0;
       query.castling[0] = 1;
@@ -280,7 +333,7 @@ void castling(Castling_message message) {
       detect_check(board, 0, 7, is_checked);
       assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
       board[0][4] = 0;
-      board[0][5] = 34;
+      board[0][5] = 33;
       board[0][6] = 31;
       board[0][7] = 0;
       query.castling[2] = 1;
@@ -300,7 +353,7 @@ void castling(Castling_message message) {
       detect_check(board, 7, 0, is_checked);
       assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
       board[7][4] = 0;
-      board[7][3] = 13;
+      board[7][3] = 17;
       board[7][2] = 11;
       board[7][1] = 0;
       board[7][0] = 0;
@@ -319,7 +372,7 @@ void castling(Castling_message message) {
       detect_check(board, 0, 0, is_checked);
       assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
       board[0][4] = 0;
-      board[0][3] = 33;
+      board[0][3] = 37;
       board[0][2] = 31;
       board[0][1] = 0;
       board[0][0] = 0;
@@ -329,6 +382,7 @@ void castling(Castling_message message) {
     }
   }
   query.lastmoveside = playerside;
+  query.lastmovetime = now();
   uint8_t b = 0;
   uint8_t g = 0;
   for (uint8_t i = 0; i < 64; i++) {
@@ -355,7 +409,7 @@ void movepiece(Move_message message) {
   match query;
   query.matchid = message.matchid;
   bool matchexist = MainTable::get(query);
-  //assert status if match was accpected needs method too
+  assert( query.status == 1, "Match was not accepted or is already over" );
   assert( matchexist, "Match not found!" );
   assert( query.white == message.player || query.black == message.player, "Player not found!" );
   uint8_t playerside;
@@ -392,13 +446,13 @@ void movepiece(Move_message message) {
     if (piece == 13) {
       query.castling[0] = 2;
     }
-    else if (piece == 14) {
+    else if (piece == 17) {
       query.castling[1] = 2;
     }
     else if (piece == 33) {
       query.castling[3] = 2;
     }
-    else if (piece == 34) {
+    else if (piece == 37) {
       query.castling[2] = 2;
     }
     add_piece_config(piece_config, {piece, 0, 0, 7, 7, 0});
@@ -410,7 +464,6 @@ void movepiece(Move_message message) {
     add_piece_config(piece_config, {piece, 0, 0, 2, 2, 1});
     break;
   case 5:
-    // ALSO special bois !!!!!!!!!!!!!!!impl pawn promotion
     add_piece_config(piece_config, {piece, 1, 1, 1, 0, 0});
     break;
   }
@@ -422,8 +475,12 @@ void movepiece(Move_message message) {
   uint8_t last_position[2] = {message.steps[0], message.steps[1]};
   bool is_checked = false;
   uint8_t en_passant = 0;
+  uint8_t promotion_piece;
   for (uint8_t x = 2; x < message.steps_len / 2; x += 2) {
-    if (message.steps[x] > 7) {break;} //as for now 10 means end of steps
+    if (message.steps[x] > 7) {
+      promotion_piece = message.steps[x];
+      break;
+    } //as for now 10 means end of steps
     uint8_t occ_piece = board[message.steps[x]][message.steps[x + 1]];
     assert( (int)message.steps[x] - (int)last_position[0] > -2 && (int)message.steps[x] - (int)last_position[0] < 2, "Vertical step is too far" );
     assert( (int)message.steps[x + 1] - (int)last_position[1] > -2 && (int)message.steps[x + 1] - (int)last_position[1] < 2, "Horinzontal step is too far" );
@@ -433,7 +490,7 @@ void movepiece(Move_message message) {
           assert((int)message.steps[x] - (int)last_position[0] < 0, "Pawn can only move in opponents direction");
           if (piece_side(occ_piece) == 100) { //if empty
             //en passant
-            assert(query.lastmove[1] == 1 && query.lastmove[3] == 3 && query.lastmove[0] > 38 && query.lastmove[0] < 47 && message.steps[x] == 2 && message.steps[x + 1] == query.lastmove[4], "Pawn can only move diagonally if an opponent piece is occupying the target field or in an en passant situation");
+            assert(query.lastmove[1] == 1 && query.lastmove[3] == 3 && query.lastmove[0] == 36 && message.steps[x] == 2 && message.steps[x + 1] == query.lastmove[4], "Pawn can only move diagonally if an opponent piece is occupying the target field or in an en passant situation");
             en_passant = board[query.lastmove[3]][query.lastmove[4]];
           }
           else {
@@ -444,7 +501,7 @@ void movepiece(Move_message message) {
           assert((int)message.steps[x] - (int)last_position[0] > 0, "Pawn can only move in opponents direction");
           if (piece_side(occ_piece) == 100) { //if empty
             //en passant
-            assert(query.lastmove[1] == 6 && query.lastmove[3] == 4 && query.lastmove[0] > 18 && query.lastmove[0] < 27 && message.steps[x] == 5 && message.steps[x + 1] == query.lastmove[4], "Pawn can only move diagonally if an opponent piece is occupying the target field or in an en passant situation");
+            assert(query.lastmove[1] == 6 && query.lastmove[3] == 4 && query.lastmove[0] == 16 && message.steps[x] == 5 && message.steps[x + 1] == query.lastmove[4], "Pawn can only move diagonally if an opponent piece is occupying the target field or in an en passant situation");
             en_passant = board[query.lastmove[3]][query.lastmove[4]];
           }
           else {
@@ -486,6 +543,7 @@ void movepiece(Move_message message) {
       horizontal_steps++; total_steps++;
       assert(piece_config[4] >= horizontal_steps, "Piece cannot move horinzontally or has no more horizontal steps left");
     }
+
     if (piece_config[5] && total_steps < 3) {//knight is not fnished
       //update last position
       last_position[0] = message.steps[x];
@@ -494,38 +552,31 @@ void movepiece(Move_message message) {
     }
     if (piece_side(occ_piece) != 100) {//next piece is not empty
       if (piece_side(occ_piece) != playerside) {
-        for (uint8_t uu = 0; uu < 16; uu++) { //add to graveyard
-          if (query.graveyard[uu] == 0) {
-            query.graveyard[uu] = occ_piece;
-            board[message.steps[x]][message.steps[x + 1]] = 0; //remove from board
-            break;// end of graveyard loop
-          }
-        }
+        board[message.steps[x]][message.steps[x + 1]] = 0; //remove from board
         //change position on board
         board[last_position[0]][last_position[1]] = 0;
         board[message.steps[x]][message.steps[x + 1]] = piece;
         break;//end of steps loop
       }
-      else {
-        assert(false, "Piece cannot move through your own pieces.");
-      }
+      assert(false, "Piece cannot move through your own pieces.");
     }
     else {
       if (en_passant) {
-        for (uint8_t uu = 0; uu < 16; uu++) { //add to graveyard
-          if (query.graveyard[uu] == 0) {
-            query.graveyard[uu] = en_passant;
-            board[query.lastmove[3]][query.lastmove[4]] = 0; //remove from board
-            break;// end of graveyard loop
-          }
-        }
+        board[query.lastmove[3]][query.lastmove[4]] = 0; //remove from board
       }
     }
     //update last position
     last_position[0] = message.steps[x];
     last_position[1] = message.steps[x + 1];
-    //break;
   }
+  if (piece_config[1]) {
+    if (last_position[0] == 0 || last_position[0] == 7 ) {
+      if (piece_config[0] == piece_side(promotion_piece)) {
+        piece = promotion_piece;
+      }
+    }
+  }
+
   board[last_position[0]][last_position[1]] = piece;
   board[message.steps[0]][message.steps[1]] = 0;
   query.lastmove[0] = piece;
@@ -539,6 +590,7 @@ void movepiece(Move_message message) {
   query.lastmove[3] = last_position[0];
   query.lastmove[4] = last_position[1];
   if (!playerside) {
+    query.moveswhite++;
     if (king) {
       query.kings[0] = last_position[0];
       query.kings[1] = last_position[1];
@@ -546,6 +598,7 @@ void movepiece(Move_message message) {
     detect_check(board, query.kings[0], query.kings[1], is_checked);
   }
   else {
+    query.movesblack++;
     if (king) {
       query.kings[2] = last_position[0];
       query.kings[3] = last_position[1];
@@ -554,11 +607,11 @@ void movepiece(Move_message message) {
   }
   assert(!is_checked, "You cannot end your move if your king is in check");
   query.lastmoveside = playerside;
+  query.lastmovetime = now();
   uint8_t b = 0;
   uint8_t g = 0;
   for (uint8_t i = 0; i < 64; i++) {
     query.board[i] = board[g][b];
-    printi((int)query.board[i]);
     if (b == 7) {
       g++;
       b = 0;
@@ -566,6 +619,7 @@ void movepiece(Move_message message) {
       b++;
     }
   }
+  /*
   printi(query.matchid);
   eos::print(" matchid", "\n");
   printn(query.white);
@@ -595,7 +649,7 @@ void movepiece(Move_message message) {
   printi(query.kings[2]);
   printi(query.kings[3]);
   eos::print(" kings", "\n");
-  //IMPORTANT impl check method and after that castling
+  */
   bool res =  MainTable::update(query);
   if (res == true) {
     eos::print( "saved move", "\n" );
@@ -619,6 +673,10 @@ extern "C" {
         eos::print("action newmatch ", "\n");
         newmatch( eos::currentMessage<Newmatch_message>() );
         break;
+      case N( acceptmatch ):
+        eos::print("action acceptmatch ", "\n");
+        acceptmatch( eos::currentMessage<Acceptmatch_message>() );
+        break;
       case N( movepiece ):
         eos::print("action movepiece ", "\n");
         movepiece( eos::currentMessage<Move_message>() );
@@ -626,6 +684,10 @@ extern "C" {
       case N( castling ):
         eos::print("action castling ", "\n");
         castling( eos::currentMessage<Castling_message>() );
+        break;
+      case N( claimwin ):
+        eos::print("action claimwin ", "\n");
+        claimwin( eos::currentMessage<Claimwin_message>() );
         break;
       default :
         assert( false, "unknown action" );
