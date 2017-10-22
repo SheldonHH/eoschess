@@ -21,9 +21,19 @@
         "player": "AccountName"
       }
     },{
-      "name": "lol",
+      "name": "acceptmatch",
       "base": "",
       "fields": {
+        "matchid": "UInt64",
+        "accept": "UInt8",
+        "player": "AccountName"
+      }
+    },{
+      "name": "claimwin",
+      "base": "",
+      "fields": {
+        "matchid": "UInt64",
+        "player": "AccountName"
       }
     },{
       "name": "newmatch",
@@ -31,7 +41,8 @@
       "fields": {
         "player": "AccountName",
         "side": "UInt8",
-        "opponent": "AccountName"
+        "opponent": "AccountName",
+        "maxmoveinterval": "UInt32"
       }
     },{
       "name": "matches",
@@ -47,10 +58,10 @@
         "check": "UInt8",
         "kings": "UInt8[]",
         "board": "UInt8[]",
-        "graveyard": "UInt8[]",
         "lastmove": "UInt8[]",
+        "lastmovetime": "UInt32",
+        "maxmoveinterval": "UInt32",
         "castling": "UInt8[]"
-
       }
     }
   ],
@@ -61,8 +72,11 @@
       "action": "newmatch",
       "type": "newmatch"
     },{
-      "action": "lol",
-      "type": "lol"
+      "action": "acceptmatch",
+      "type": "acceptmatch"
+    },{
+      "action": "claimwin",
+      "type": "claimwin"
     },{
       "action": "castling",
       "type": "castling"
@@ -75,7 +89,7 @@
       "keynames": [
         "matchid",
         "white",
-        "black",  
+        "black",
         "status",
         "lastmoveside",
         "moveswhite",
@@ -84,10 +98,10 @@
         "check",
         "kings",
         "board",
-        "graveyard",
         "lastmove",
+        "lastmovetime",
+        "maxmoveinterval",
         "castling"
-
       ],
       "keytypes": [
         "UInt64"
