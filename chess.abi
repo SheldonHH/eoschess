@@ -86,26 +86,8 @@
       "table": "matches",
       "type": "matches",
       "indextype": "i64",
-      "keynames": [
-        "matchid",
-        "white",
-        "black",
-        "status",
-        "lastmoveside",
-        "moveswhite",
-        "movesblack",
-        "matchstart",
-        "check",
-        "kings",
-        "board",
-        "lastmove",
-        "lastmovetime",
-        "maxmoveinterval",
-        "castling"
-      ],
-      "keytypes": [
-        "UInt64"
-      ]
+      "keynames": ["matchid"],
+      "keytypes": ["UInt64"]
     }
     ]
 }
