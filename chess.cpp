@@ -584,11 +584,7 @@ void movepiece(Move_message message) {
   query.lastmove[2] = message.steps[1];
   query.lastmove[3] = last_position[0];
   query.lastmove[4] = last_position[1];
-  query.lastmove[0] = piece;
-  query.lastmove[1] = message.steps[0];
-  query.lastmove[2] = message.steps[1];
-  query.lastmove[3] = last_position[0];
-  query.lastmove[4] = last_position[1];
+  
   if (!playerside) {
     query.moveswhite++;
     if (king) {
