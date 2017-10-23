@@ -45,7 +45,7 @@
         "maxmoveinterval": "UInt32"
       }
     },{
-      "name": "matches",
+      "name": "match",
       "fields": {
         "matchid": "UInt64",
         "white": "AccountName",
@@ -84,7 +84,7 @@
   ],
   "tables": [{
       "table": "matches",
-      "type": "matches",
+      "type": "match",
       "indextype": "i64",
       "keynames": ["matchid"],
       "keytypes": ["UInt64"]
