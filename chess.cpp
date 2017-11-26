@@ -190,7 +190,7 @@ void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_po
 }
 
 void acceptmatch( Acceptmatch_message message ) {
-  eos::requireAuth( message.player );
+  eosio::require_auth( message.player );
   match query;
   query.matchid = message.matchid;
   bool find_match = MainTable::get(query);
@@ -206,7 +206,7 @@ void acceptmatch( Acceptmatch_message message ) {
 }
 
 void claimwin( Claimwin_message message ) {
-  eos::requireAuth( message.player );
+  eosio::require_auth( message.player );
   match query;
   query.matchid = message.matchid;
   bool find_match = MainTable::get(query);
@@ -221,7 +221,7 @@ void claimwin( Claimwin_message message ) {
 }
 
 void newmatch(Newmatch_message message) {
-  eos::requireAuth( message.player );
+  eosio::require_auth( message.player );
   uint64_t matchid;
   match query;
   bool lastmatch = MainTable::back(query);
@@ -283,16 +283,16 @@ void newmatch(Newmatch_message message) {
   a.castling[3] = 0;
   bool res =  MainTable::store(a);
   if (res == true) {
-    eos::print( "Created new match", "\n" );
+    eosio::print( "Created new match", "\n" );
     //requireNotice(N(Account1)); ?
   } else {
-    eos::print( "Could not create new match", "\n" );
+    eosio::print( "Could not create new match", "\n" );
     //why?
   }
 }
 
 void castling(Castling_message message) {
-  eos::requireAuth( message.player );
+  eosio::require_auth( message.player );
   match query;
   query.matchid = message.matchid;
   bool matchexist = MainTable::get(query);
@@ -396,16 +396,16 @@ void castling(Castling_message message) {
   }
   bool res =  MainTable::update(query);
   if (res == true) {
-    eos::print( "saved castling move", "\n" );
+    eosio::print( "saved castling move", "\n" );
     //ask player2
   } else {
-    eos::print( "couldnt save castling move", "\n" );
+    eosio::print( "couldnt save castling move", "\n" );
     //why?
   }
 }
 
 void movepiece(Move_message message) {
-  eos::requireAuth( message.player );
+  eosio::require_auth( message.player );
   match query;
   query.matchid = message.matchid;
   bool matchexist = MainTable::get(query);
@@ -617,41 +617,41 @@ void movepiece(Move_message message) {
   }
   /*
   printi(query.matchid);
-  eos::print(" matchid", "\n");
+  eosio::print(" matchid", "\n");
   printn(query.white);
-  eos::print(" white", "\n");
+  eosio::print(" white", "\n");
   printn(query.black);
-  eos::print(" black", "\n");
+  eosio::print(" black", "\n");
   printi(query.status);
-  eos::print(" status", "\n");
+  eosio::print(" status", "\n");
   printi(query.lastmoveside);
-  eos::print(" lastmoveside", "\n");
+  eosio::print(" lastmoveside", "\n");
   printi(query.moveswhite);
-  eos::print(" moveswhite", "\n");
+  eosio::print(" moveswhite", "\n");
   printi(query.movesblack);
-  eos::print(" movesblack", "\n");
+  eosio::print(" movesblack", "\n");
   printi(query.matchstart);
-  eos::print(" matchstart", "\n");
+  eosio::print(" matchstart", "\n");
   printi(query.lastmove[0]);
   printi(query.lastmove[1]);
   printi(query.lastmove[2]);
   printi(query.lastmove[3]);
   printi(query.lastmove[4]);
-  eos::print(" lastmove", "\n");
+  eosio::print(" lastmove", "\n");
   printi(query.check);
-  eos::print(" check", "\n");
+  eosio::print(" check", "\n");
   printi(query.kings[0]);
   printi(query.kings[1]);
   printi(query.kings[2]);
   printi(query.kings[3]);
-  eos::print(" kings", "\n");
+  eosio::print(" kings", "\n");
   */
   bool res =  MainTable::update(query);
   if (res == true) {
-    eos::print( "saved move", "\n" );
+    eosio::print( "saved move", "\n" );
     //ask player2
   } else {
-    eos::print( "couldnt save move", "\n" );
+    eosio::print( "couldnt save move", "\n" );
     //why?
   }
 }
@@ -666,24 +666,24 @@ extern "C" {
     if ( code == N(chess) ) {
       switch ( action ) {
       case N( newmatch ):
-        eos::print("action newmatch ", "\n");
-        newmatch( eos::currentMessage<Newmatch_message>() );
+        eosio::print("action newmatch ", "\n");
+        newmatch( eosio::current_message<Newmatch_message>() );
         break;
       case N( acceptmatch ):
-        eos::print("action acceptmatch ", "\n");
-        acceptmatch( eos::currentMessage<Acceptmatch_message>() );
+        eosio::print("action acceptmatch ", "\n");
+        acceptmatch( eosio::current_message<Acceptmatch_message>() );
         break;
       case N( movepiece ):
-        eos::print("action movepiece ", "\n");
-        movepiece( eos::currentMessage<Move_message>() );
+        eosio::print("action movepiece ", "\n");
+        movepiece( eosio::current_message<Move_message>() );
         break;
       case N( castling ):
-        eos::print("action castling ", "\n");
-        castling( eos::currentMessage<Castling_message>() );
+        eosio::print("action castling ", "\n");
+        castling( eosio::current_message<Castling_message>() );
         break;
       case N( claimwin ):
-        eos::print("action claimwin ", "\n");
-        claimwin( eos::currentMessage<Claimwin_message>() );
+        eosio::print("action claimwin ", "\n");
+        claimwin( eosio::current_message<Claimwin_message>() );
         break;
       default :
         assert( false, "unknown action" );

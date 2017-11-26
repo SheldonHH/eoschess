@@ -1,93 +1,93 @@
 {
   "types": [{
-      "newTypeName": "AccountName",
-      "type": "Name"
+      "new_type_name": "account_name",
+      "type": "name"
     }
   ],
   "structs": [{
       "name": "movepiece",
       "base": "",
       "fields": {
-        "matchid": "UInt64",
-        "steps": "UInt8[]",
-        "player": "AccountName"
+        "matchid": "uint64",
+        "steps": "uint8[]",
+        "player": "account_name"
       }
     },{
       "name": "castling",
       "base": "",
       "fields": {
-        "matchid": "UInt64",
-        "type": "UInt8",
-        "player": "AccountName"
+        "matchid": "uint64",
+        "type": "uint8",
+        "player": "account_name"
       }
     },{
       "name": "acceptmatch",
       "base": "",
       "fields": {
-        "matchid": "UInt64",
-        "accept": "UInt8",
-        "player": "AccountName"
+        "matchid": "uint64",
+        "accept": "uint8",
+        "player": "account_name"
       }
     },{
       "name": "claimwin",
       "base": "",
       "fields": {
-        "matchid": "UInt64",
-        "player": "AccountName"
+        "matchid": "uint64",
+        "player": "account_name"
       }
     },{
       "name": "newmatch",
       "base": "",
       "fields": {
-        "player": "AccountName",
-        "side": "UInt8",
-        "opponent": "AccountName",
-        "maxmoveinterval": "UInt32"
+        "player": "account_name",
+        "side": "uint8",
+        "opponent": "account_name",
+        "maxmoveinterval": "uint32"
       }
     },{
       "name": "match",
       "fields": {
-        "matchid": "UInt64",
-        "white": "AccountName",
-        "black": "AccountName",
-        "status": "UInt8",
-        "lastmoveside": "UInt8",
-        "moveswhite": "UInt64",
-        "movesblack": "UInt64",
-        "matchstart": "UInt32",
-        "check": "UInt8",
-        "kings": "UInt8[]",
-        "board": "UInt8[]",
-        "lastmove": "UInt8[]",
-        "lastmovetime": "UInt32",
-        "maxmoveinterval": "UInt32",
-        "castling": "UInt8[]"
+        "matchid": "uint64",
+        "white": "account_name",
+        "black": "account_name",
+        "status": "uint8",
+        "lastmoveside": "uint8",
+        "moveswhite": "uint64",
+        "movesblack": "uint64",
+        "matchstart": "uint32",
+        "check": "uint8",
+        "kings": "uint8[]",
+        "board": "uint8[]",
+        "lastmove": "uint8[]",
+        "lastmovetime": "uint32",
+        "maxmoveinterval": "uint32",
+        "castling": "uint8[]"
       }
     }
   ],
   "actions": [{
-      "action": "movepiece",
+      "action_name": "movepiece",
       "type": "movepiece"
     },{
-      "action": "newmatch",
+      "action_name": "newmatch",
       "type": "newmatch"
     },{
-      "action": "acceptmatch",
+      "action_name": "acceptmatch",
       "type": "acceptmatch"
     },{
-      "action": "claimwin",
+      "action_name": "claimwin",
       "type": "claimwin"
     },{
-      "action": "castling",
+      "action_name": "castling",
       "type": "castling"
     }
   ],
   "tables": [{
-      "table": "matches",
+      "table_name": "matches",
       "type": "match",
-      "indextype": "i64",
-      "keynames": ["matchid"],
-      "keytypes": ["UInt64"]
+      "index_type": "i64",
+      "key_names": ["matchid"],
+      "key_types": ["uint64"]
     }
     ]
 }
