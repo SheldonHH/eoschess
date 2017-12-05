@@ -196,6 +196,7 @@ void acceptmatch( Acceptmatch_message message ) {
   bool find_match = MainTable::get(query);
   assert(find_match, "Could not find match");
   assert(query.white == message.player || query.black == message.player, "Could not find player in this match");
+  assert(message.player == query.opponent, "You cant accept a match if you are not the opponent");
   assert(!query.status, "The match has already started or is over");
   assert(message.accept = 1 || message.accept == 2, "You can either accept(1) or deny(2) the match request");
   query.status = message.accept;
@@ -237,6 +238,7 @@ void newmatch(Newmatch_message message) {
     black = message.player;
   }
   match a;
+  a.opponent = message.opponent;
   a.maxmoveinterval = message.maxmoveinterval;
   a.matchid = matchid;
   a.white = white;
