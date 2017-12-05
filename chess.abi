@@ -48,6 +48,7 @@
       "name": "match",
       "fields": {
         "matchid": "uint64",
+        "opponent": "account_name",
         "white": "account_name",
         "black": "account_name",
         "status": "uint8",
