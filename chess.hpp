@@ -34,7 +34,8 @@ struct PACKED( Castling_message ) {
 };
 
 struct PACKED( match ) {
-	uint64_t	matchid;
+	uint64_t matchid;
+	account_name opponent;
 	account_name white;
 	account_name  black;
 	uint8_t status;// 0 started  1 accepted 2 denied 3 game over 4 aborted?
