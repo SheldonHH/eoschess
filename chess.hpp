@@ -22,8 +22,8 @@ struct PACKED( Acceptmatch_message ) {
 
 struct PACKED( Move_message ) {
 	uint64_t	matchid;
-	uint8_t steps_len = 16;
-	uint8_t steps[16];
+	uint8_t steps_len = 17;
+	uint8_t steps[17];
 	account_name	player;
 };
 
@@ -69,4 +69,3 @@ uint8_t FRESHBOARD [8][8] = {
 	{16, 16, 16, 16, 16, 16, 16, 16},
 	{17, 15, 14, 12, 11, 14, 15, 13}
 };*/
-

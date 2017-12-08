@@ -70,21 +70,26 @@ uint8_t piece_side(uint8_t piece) {
   }
 }
 
-void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_pos_hor, bool is_checked) {
-  uint8_t kingside = piece_side(board[king_pos_vert][king_pos_hor]);
+void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_pos_hor, bool &is_checked, bool kside) {
+  uint8_t kingside;
+  if(kside) {
+    kingside = 1;
+  } else {
+    kingside = 0;
+  }
   uint8_t vert_plus_one = king_pos_vert + 1;
   uint8_t vert_minus_one = king_pos_vert - 1;
   uint8_t hor_plus_one = king_pos_hor + 1;
   uint8_t hor_minus_one = king_pos_hor - 1;
   uint8_t directions [8][2] = {
-    {vert_plus_one, king_pos_hor}, //vert_top
-    {vert_minus_one, king_pos_hor}, //vert_bottom
-    {king_pos_vert, hor_plus_one}, //hor_right
-    {king_pos_vert, hor_minus_one}, //hor_left
-    {vert_plus_one, hor_plus_one}, //diag_top_right
-    {vert_plus_one, hor_minus_one}, //diag_top_left
-    {vert_minus_one, hor_plus_one}, //diag_bottom_right
-    {vert_minus_one, hor_minus_one} //diag_bottom_left
+    {vert_minus_one, king_pos_hor}, //vert_top0
+    {vert_plus_one, king_pos_hor}, //vert_bottom1
+    {king_pos_vert, hor_plus_one}, //hor_right2
+    {king_pos_vert, hor_minus_one}, //hor_left3
+    {vert_minus_one, hor_plus_one}, //diag_top_right4
+    {vert_minus_one, hor_minus_one}, //diag_top_left5
+    {vert_plus_one, hor_plus_one}, //diag_bottom_right6
+    {vert_plus_one, hor_minus_one} //diag_bottom_left7
   };
   uint8_t hor, vert, p_side, direction;
   for (uint8_t j = 0; j < 8; j++) {
@@ -310,12 +315,12 @@ void castling(Castling_message message) {
   if (message.type) { //if short castling
     if (!playerside) { //if white
       assert(!query.castling[1] && !board[7][5] && !board[7][6], "Short castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
-      detect_check(board, 7, 4, is_checked);
+      detect_check(board, 7, 4, is_checked, 0);
       assert( !is_checked, "Cannot castle while checked" );
-      detect_check(board, 7, 5, is_checked);
-      detect_check(board, 7, 6, is_checked);
+      detect_check(board, 7, 5, is_checked, 0);
+      detect_check(board, 7, 6, is_checked, 0);
       assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
-      detect_check(board, 7, 7, is_checked);
+      detect_check(board, 7, 7, is_checked, 0);
       assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
       board[7][4] = 0;
       board[7][5] = 13;
@@ -327,12 +332,12 @@ void castling(Castling_message message) {
     }
     else {
       assert(!query.castling[3] && !board[0][5] && !board[0][6], "Short castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
-      detect_check(board, 0, 4, is_checked);
+      detect_check(board, 0, 4, is_checked, 1);
       assert( !is_checked, "Cannot castle while checked" );
-      detect_check(board, 0, 5, is_checked);
-      detect_check(board, 0, 6, is_checked);
+      detect_check(board, 0, 5, is_checked, 1);
+      detect_check(board, 0, 6, is_checked, 1);
       assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
-      detect_check(board, 0, 7, is_checked);
+      detect_check(board, 0, 7, is_checked, 1);
       assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
       board[0][4] = 0;
       board[0][5] = 33;
@@ -346,13 +351,13 @@ void castling(Castling_message message) {
   else {
     if (!playerside) {
       assert(!query.castling[0] && !board[7][1] && !board[7][2] && !board[7][3], "Long castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
-      detect_check(board, 7, 4, is_checked);
+      detect_check(board, 7, 4, is_checked, 0);
       assert( !is_checked, "Cannot castle while checked" );
-      detect_check(board, 7, 1, is_checked);
-      detect_check(board, 7, 2, is_checked);
-      detect_check(board, 7, 3, is_checked);
+      detect_check(board, 7, 1, is_checked, 0);
+      detect_check(board, 7, 2, is_checked, 0);
+      detect_check(board, 7, 3, is_checked, 0);
       assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
-      detect_check(board, 7, 0, is_checked);
+      detect_check(board, 7, 0, is_checked, 0);
       assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
       board[7][4] = 0;
       board[7][3] = 17;
@@ -365,13 +370,13 @@ void castling(Castling_message message) {
     }
     else {
       assert(!query.castling[2] && !board[0][1] && !board[0][2] && !board[0][3], "Long castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
-      detect_check(board, 0, 4, is_checked);
+      detect_check(board, 0, 4, is_checked, 1);
       assert( !is_checked, "Cannot castle while checked" );
-      detect_check(board, 0, 1, is_checked);
-      detect_check(board, 0, 2, is_checked);
-      detect_check(board, 0, 3, is_checked);
+      detect_check(board, 0, 1, is_checked, 1);
+      detect_check(board, 0, 2, is_checked, 1);
+      detect_check(board, 0, 3, is_checked, 1);
       assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
-      detect_check(board, 0, 0, is_checked);
+      detect_check(board, 0, 0, is_checked, 1);
       assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
       board[0][4] = 0;
       board[0][3] = 37;
@@ -469,21 +474,20 @@ void movepiece(Move_message message) {
     add_piece_config(piece_config, {piece, 1, 1, 1, 0, 0});
     break;
   }
-
+  uint8_t occ_piece;
   uint8_t horizontal_steps = 0;
   uint8_t vertical_steps = 0;
   uint8_t diagonal_steps = 0;
   uint8_t total_steps = 0;
   uint8_t last_position[2] = {message.steps[0], message.steps[1]};
-  bool is_checked = false;
   uint8_t en_passant = 0;
   uint8_t promotion_piece;
-  for (uint8_t x = 2; x < message.steps_len / 2; x += 2) {
+  for (uint8_t x = 2; x < 17; x += 2) {
     if (message.steps[x] > 7) {
       promotion_piece = message.steps[x];
       break;
     } //as for now 10 means end of steps
-    uint8_t occ_piece = board[message.steps[x]][message.steps[x + 1]];
+    occ_piece = board[message.steps[x]][message.steps[x + 1]];
     assert( (int)message.steps[x] - (int)last_position[0] > -2 && (int)message.steps[x] - (int)last_position[0] < 2, "Vertical step is too far" );
     assert( (int)message.steps[x + 1] - (int)last_position[1] > -2 && (int)message.steps[x + 1] - (int)last_position[1] < 2, "Horinzontal step is too far" );
     if (message.steps[x] != last_position[0] && message.steps[x + 1] != last_position[1]) { //diagonal step
@@ -554,10 +558,10 @@ void movepiece(Move_message message) {
     }
     if (piece_side(occ_piece) != 100) {//next piece is not empty
       if (piece_side(occ_piece) != playerside) {
-        board[message.steps[x]][message.steps[x + 1]] = 0; //remove from board
-        //change position on board
         board[last_position[0]][last_position[1]] = 0;
         board[message.steps[x]][message.steps[x + 1]] = piece;
+        last_position[0] = message.steps[x];
+        last_position[1] = message.steps[x + 1];
         break;//end of steps loop
       }
       assert(false, "Piece cannot move through your own pieces.");
@@ -566,11 +570,16 @@ void movepiece(Move_message message) {
       if (en_passant) {
         board[query.lastmove[3]][query.lastmove[4]] = 0; //remove from board
       }
+      board[message.steps[x]][message.steps[x + 1]] = piece;
+      if(!piece_config[5]) {
+        board[message.steps[x - 2]][message.steps[x - 1]] = 0;
+      }
     }
     //update last position
     last_position[0] = message.steps[x];
     last_position[1] = message.steps[x + 1];
   }
+
   if (piece_config[1]) {
     if (last_position[0] == 0 || last_position[0] == 7 ) {
       if (piece_config[0] == piece_side(promotion_piece)) {
@@ -578,22 +587,20 @@ void movepiece(Move_message message) {
       }
     }
   }
-
-  board[last_position[0]][last_position[1]] = piece;
   board[message.steps[0]][message.steps[1]] = 0;
   query.lastmove[0] = piece;
   query.lastmove[1] = message.steps[0];
   query.lastmove[2] = message.steps[1];
   query.lastmove[3] = last_position[0];
   query.lastmove[4] = last_position[1];
-  
+  bool is_checked = false;
   if (!playerside) {
     query.moveswhite++;
     if (king) {
       query.kings[0] = last_position[0];
       query.kings[1] = last_position[1];
     }
-    detect_check(board, query.kings[0], query.kings[1], is_checked);
+    detect_check(board, query.kings[0], query.kings[1], is_checked, 0);
   }
   else {
     query.movesblack++;
@@ -601,7 +608,7 @@ void movepiece(Move_message message) {
       query.kings[2] = last_position[0];
       query.kings[3] = last_position[1];
     }
-    detect_check(board, query.kings[2], query.kings[3], is_checked);
+    detect_check(board, query.kings[2], query.kings[3], is_checked, 1);
   }
   assert(!is_checked, "You cannot end your move if your king is in check");
   query.lastmoveside = playerside;
@@ -617,37 +624,7 @@ void movepiece(Move_message message) {
       b++;
     }
   }
-  /*
-  printi(query.matchid);
-  eosio::print(" matchid", "\n");
-  printn(query.white);
-  eosio::print(" white", "\n");
-  printn(query.black);
-  eosio::print(" black", "\n");
-  printi(query.status);
-  eosio::print(" status", "\n");
-  printi(query.lastmoveside);
-  eosio::print(" lastmoveside", "\n");
-  printi(query.moveswhite);
-  eosio::print(" moveswhite", "\n");
-  printi(query.movesblack);
-  eosio::print(" movesblack", "\n");
-  printi(query.matchstart);
-  eosio::print(" matchstart", "\n");
-  printi(query.lastmove[0]);
-  printi(query.lastmove[1]);
-  printi(query.lastmove[2]);
-  printi(query.lastmove[3]);
-  printi(query.lastmove[4]);
-  eosio::print(" lastmove", "\n");
-  printi(query.check);
-  eosio::print(" check", "\n");
-  printi(query.kings[0]);
-  printi(query.kings[1]);
-  printi(query.kings[2]);
-  printi(query.kings[3]);
-  eosio::print(" kings", "\n");
-  */
+
   bool res =  MainTable::update(query);
   if (res == true) {
     eosio::print( "saved move", "\n" );
@@ -693,4 +670,3 @@ extern "C" {
     }
   }
 } // extern "C"
-
