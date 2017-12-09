@@ -1,10 +1,6 @@
 {
-  "types": [{
-      "new_type_name": "account_name",
-      "type": "name"
-    }
-  ],
-  "structs": [{
+  "structs": [
+    {
       "name": "movepiece",
       "base": "",
       "fields": {
@@ -12,7 +8,8 @@
         "steps": "uint8[]",
         "player": "account_name"
       }
-    },{
+    },
+    {
       "name": "castling",
       "base": "",
       "fields": {
@@ -20,7 +17,8 @@
         "type": "uint8",
         "player": "account_name"
       }
-    },{
+    },
+    {
       "name": "acceptmatch",
       "base": "",
       "fields": {
@@ -28,14 +26,16 @@
         "accept": "uint8",
         "player": "account_name"
       }
-    },{
+    },
+    {
       "name": "claimwin",
       "base": "",
       "fields": {
         "matchid": "uint64",
         "player": "account_name"
       }
-    },{
+    },
+    {
       "name": "newmatch",
       "base": "",
       "fields": {
@@ -44,7 +44,8 @@
         "opponent": "account_name",
         "maxmoveinterval": "uint32"
       }
-    },{
+    },
+    {
       "name": "match",
       "fields": {
         "matchid": "uint64",
@@ -64,31 +65,64 @@
         "maxmoveinterval": "uint32",
         "castling": "uint8[]"
       }
+    },
+    {
+      "name": "matchrequest",
+      "fields": {
+        "requestid": "uint64",
+        "matchid": "uint64",
+        "status": "uint8",
+        "opponent": "account_name",
+        "opponentside": "uint8",
+        "maxmoveinterval": "uint32",
+        "matchstart": "uint32"
+      }
     }
   ],
-  "actions": [{
+  "actions": [
+    {
       "action_name": "movepiece",
       "type": "movepiece"
-    },{
+    },
+    {
       "action_name": "newmatch",
       "type": "newmatch"
-    },{
+    },
+    {
       "action_name": "acceptmatch",
       "type": "acceptmatch"
-    },{
+    },
+    {
       "action_name": "claimwin",
       "type": "claimwin"
-    },{
+    },
+    {
       "action_name": "castling",
       "type": "castling"
     }
   ],
-  "tables": [{
+  "tables": [
+    {
       "table_name": "matches",
       "type": "match",
       "index_type": "i64",
-      "key_names": ["matchid"],
-      "key_types": ["uint64"]
+      "key_names": [
+        "matchid"
+      ],
+      "key_types": [
+        "uint64"
+      ]
+    },
+    {
+      "table_name": "requests",
+      "type": "matchrequest",
+      "index_type": "i64",
+      "key_names": [
+        "requestid"
+      ],
+      "key_types": [
+        "uint64"
+      ]
     }
-    ]
+  ]
 }

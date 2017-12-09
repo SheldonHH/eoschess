@@ -4,7 +4,7 @@
 
 struct PACKED( Newmatch_message ) {
 	account_name player;
-	uint8_t side;//0white
+	uint8_t side;
 	account_name opponent;
 	uint32_t maxmoveinterval;
 };
@@ -25,6 +25,16 @@ struct PACKED( Move_message ) {
 	uint8_t steps_len = 17;
 	uint8_t steps[17];
 	account_name	player;
+};
+
+struct PACKED( matchrequest ) {
+	uint64_t requestid;
+	uint64_t matchid;
+	account_name opponent;
+	uint8_t	status;
+	uint8_t opponentside;
+	uint32_t maxmoveinterval;
+	uint32_t matchstart;
 };
 
 struct PACKED( Castling_message ) {
@@ -56,8 +66,8 @@ struct PACKED( match ) {
 	uint8_t castling[4];// {long castle white, short castling white, long castle black, short castling black}
 };
 
-typedef eosio::table<N(chess), N(chess), N(matches), match, uint64_t> MainTable;
-
+typedef eosio::table<N(chess), N(chess), N(matches), match, uint64_t> MatchTable;
+typedef eosio::table<N(chess), N(chess), N(requests), matchrequest, uint64_t> RequestTable;
 /*
 uint8_t FRESHBOARD [8][8] = {
 	{37, 35, 34, 32, 31, 34, 35, 33},

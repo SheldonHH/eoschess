@@ -70,6 +70,14 @@ uint8_t piece_side(uint8_t piece) {
   }
 }
 
+uint64_t createRequestId( uint64_t b) {
+  uint64_t a = time();
+   uint64_t times = 1;
+   while (times <= b)
+      times *= 10;
+   return a*times + b;
+}
+
 void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_pos_hor, bool &is_checked, bool kside) {
   uint8_t kingside;
   if(kside) {
@@ -198,7 +206,7 @@ void acceptmatch( Acceptmatch_message message ) {
   eosio::require_auth( message.player );
   match query;
   query.matchid = message.matchid;
-  bool find_match = MainTable::get(query);
+  bool find_match = MatchTable::get(query);
   assert(find_match, "Could not find match");
   assert(query.white == message.player || query.black == message.player, "Could not find player in this match");
   assert(message.player == query.opponent, "You cant accept a match if you are not the opponent");
@@ -207,7 +215,7 @@ void acceptmatch( Acceptmatch_message message ) {
   query.status = message.accept;
   query.matchstart = now();
   query.lastmovetime = now();
-  bool update_status = MainTable::update(query);
+  bool update_status = MatchTable::update(query);
   assert(update_status, "Could not update match status");
 }
 
@@ -215,23 +223,22 @@ void claimwin( Claimwin_message message ) {
   eosio::require_auth( message.player );
   match query;
   query.matchid = message.matchid;
-  bool find_match = MainTable::get(query);
+  bool find_match = MatchTable::get(query);
   assert(find_match, "Could not find match");
   assert(query.white == message.player || query.black == message.player, "Could not find player in this match");
   assert(query.status == 1, "The match is already over or has not been started");
   uint32_t time = now();
   assert(time >= query.lastmovetime + query.maxmoveinterval, "Your opponent still has time left to make a move");
   query.status = 3;
-  bool update_status = MainTable::update(query);
+  bool update_status = MatchTable::update(query);
   assert(update_status, "Could not update match status");
 }
 
 void newmatch(Newmatch_message message) {
   eosio::require_auth( message.player );
-  uint64_t matchid;
+  time nowtime = now();
+  uint64_t matchid = nowtime;
   match query;
-  bool lastmatch = MainTable::back(query);
-  (lastmatch) ? matchid = query.matchid + 1 : matchid = 0 ;
   uint64_t white;
   uint64_t black;
   assert(message.maxmoveinterval, "You have to specify a max move interval in seconds");
@@ -242,6 +249,16 @@ void newmatch(Newmatch_message message) {
     white = message.opponent;
     black = message.player;
   }
+  matchrequest n;
+  n.requestid = matchid;
+  n.matchid = matchid;
+  n.opponent = N(initb);
+  n.status = 1;
+  n.opponentside = message.side;
+  n.maxmoveinterval = message.maxmoveinterval;
+  n.matchstart = 1;
+  bool res =  RequestTable::store(n, message.opponent);
+  assert(res, "that shouldnt be possible");
   match a;
   a.opponent = message.opponent;
   a.maxmoveinterval = message.maxmoveinterval;
@@ -288,21 +305,15 @@ void newmatch(Newmatch_message message) {
   a.castling[1] = 0;
   a.castling[2] = 0;
   a.castling[3] = 0;
-  bool res =  MainTable::store(a);
-  if (res == true) {
-    eosio::print( "Created new match", "\n" );
-    //requireNotice(N(Account1)); ?
-  } else {
-    eosio::print( "Could not create new match", "\n" );
-    //why?
-  }
+
+  bool res2 =  MatchTable::store(a, message.player);
 }
 
 void castling(Castling_message message) {
   eosio::require_auth( message.player );
   match query;
   query.matchid = message.matchid;
-  bool matchexist = MainTable::get(query);
+  bool matchexist = MatchTable::get(query);
   assert( query.status == 1, "Match was not accepted or is already over" );
   assert( matchexist, "Match not found!" );
   assert( query.white == message.player || query.black == message.player, "Player not found!" );
@@ -401,7 +412,7 @@ void castling(Castling_message message) {
       b++;
     }
   }
-  bool res =  MainTable::update(query);
+  bool res =  MatchTable::update(query);
   if (res == true) {
     eosio::print( "saved castling move", "\n" );
     //ask player2
@@ -415,7 +426,7 @@ void movepiece(Move_message message) {
   eosio::require_auth( message.player );
   match query;
   query.matchid = message.matchid;
-  bool matchexist = MainTable::get(query);
+  bool matchexist = MatchTable::get(query);
   assert( query.status == 1, "Match was not accepted or is already over" );
   assert( matchexist, "Match not found!" );
   assert( query.white == message.player || query.black == message.player, "Player not found!" );
@@ -625,7 +636,7 @@ void movepiece(Move_message message) {
     }
   }
 
-  bool res =  MainTable::update(query);
+  bool res =  MatchTable::update(query);
   if (res == true) {
     eosio::print( "saved move", "\n" );
     //ask player2
