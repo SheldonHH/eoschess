@@ -196,68 +196,117 @@ void detect_check(uint8_t (&board)[8][8], uint8_t king_pos_vert, uint8_t king_po
 
 void acceptmatch( Acceptmatch_message message ) {
   eosio::require_auth( message.player );
-  match query;
-  query.matchid = message.matchid;
-  bool find_match = MainTable::get(query);
-  assert(find_match, "Could not find match");
-  assert(query.white == message.player || query.black == message.player, "Could not find player in this match");
-  assert(message.player == query.opponent, "You cant accept a match if you are not the opponent");
-  assert(!query.status, "The match has already started or is over");
-  assert(message.accept = 1 || message.accept == 2, "You can either accept(1) or deny(2) the match request");
-  query.status = message.accept;
-  query.matchstart = now();
-  query.lastmovetime = now();
-  bool update_status = MainTable::update(query);
-  assert(update_status, "Could not update match status");
+  matchrequest request;
+  request.opponent = message.opponent;
+  bool findrequest = RequestTable::get(request, message.player);
+  assert(findrequest, "{\"reason\": \"Could not find a request with that opponent.\"}");
+  assert(!request.status, "{\"reason\": \"The match has already started or is over.\"}");
+  matchrequest requested;
+  requested.opponent = message.player;
+  bool findrequested = RequestTable::get(requested, message.opponent);
+  assert(findrequested, "{\"reason\": \"Could not find a request with that opponent.\"}");
+  assert(!requested.status, "{\"reason\": \"The match has already started or is over.\"}");
+  request.status = 1;
+  request.matchstart = now();
+  requested.status = 1;
+  requested.matchstart = request.matchstart;
+  bool updaterequest = RequestTable::update(request, message.player);
+  bool updaterequested = RequestedTable::update(requested, message.opponent);
+  assert(updaterequest && updaterequested, "{\"reason\": \"Could not update match status.\"}");
+}
+
+void declinematch( Acceptmatch_message message ) {
+  eosio::require_auth( message.player );
+  matchrequest request;
+  request.opponent = message.opponent;
+  bool findrequest = RequestTable::get(request, message.player);
+  assert(findrequest, "{\"reason\": \"Could not find a request with that opponent.\"}");
+  assert(!request.status, "{\"reason\": \"The match has already started or is over.\"}");
+  matchrequest requested;
+  requested.opponent = message.player;
+  bool findrequested = RequestedTable::get(requested, message.opponent);
+  assert(findrequested, "{\"reason\": \"Could not find a request with that opponent.\"}");
+  assert(!requested.status, "{\"reason\": \"The match has already started or is over.\"}");
+  request.status = 2;
+  requested.status = 2;
+  bool updaterequest = RequestTable::update(request, message.player);
+  bool updaterequested = RequestedTable::update(requested, message.opponent);
+  assert(updaterequest && updaterequested, "{\"reason\": \"Could not update match status.\"}");
+  match newmatch;
+  newmatch.matchid = request.matchid;
+  bool removematch = MatchTable::remove(newmatch, message.opponent);
+  assert(removematch, "{\"reason\": \"Could not remove match.\"}");
+}
+
+void matchmaking( Matchmaking_message message ) {
+  eosio::require_auth( message.player );
+  Matchmaking_message ad;
+  ad.player = message.player;
+  ad.status = message.status;
+  bool findad = MatchMakingTable::get(ad);
+  if(findad) {
+    bool updatead =  MatchMakingTable::update(ad);
+  } else {
+    bool publishad =  MatchMakingTable::store(ad);
+  }
 }
 
 void claimwin( Claimwin_message message ) {
   eosio::require_auth( message.player );
   match query;
   query.matchid = message.matchid;
-  bool find_match = MainTable::get(query);
-  assert(find_match, "Could not find match");
-  assert(query.white == message.player || query.black == message.player, "Could not find player in this match");
-  assert(query.status == 1, "The match is already over or has not been started");
+  bool findmatch = MatchTable::get(query, message.host);
+  assert(findmatch, "{\"reason\": \"Could not find match.\"}");
+  assert(query.white == message.player || query.black == message.player, "Could not find player in this match.\"}");
+  assert(query.status == 1, "{\"reason\": \"The match is already over or has not been started.\"}");
   uint32_t time = now();
-  assert(time >= query.lastmovetime + query.maxmoveinterval, "Your opponent still has time left to make a move");
+  assert(time >= query.lastmovetime + query.maxmoveinterval, "{\"reason\": \"Your opponent still has time left to make a move.\"}");
   query.status = 3;
-  bool update_status = MainTable::update(query);
-  assert(update_status, "Could not update match status");
+  matchrequest request;
+  matchrequest requested;
+  request.opponent = message.host;
+  bool updaterequest =  RequestTable::update(request, query.opponent);
+  requested.opponent = query.opponent;
+  bool updaterequested =  RequestedTable::update(requested, message.host);
+  bool updatematch =  MatchTable::update(query, message.host);
+  assert(updaterequest && updaterequested && updatematch, "{\"reason\": \"Could not update match and request.\"}");
 }
 
 void newmatch(Newmatch_message message) {
   eosio::require_auth( message.player );
-  uint64_t matchid;
-  match query;
-  bool lastmatch = MainTable::back(query);
-  (lastmatch) ? matchid = query.matchid + 1 : matchid = 0 ;
-  uint64_t white;
-  uint64_t black;
-  assert(message.maxmoveinterval, "You have to specify a max move interval in seconds");
-  if (message.side == 0) {
-    white = message.player;
-    black = message.opponent;
-  } else {
-    white = message.opponent;
-    black = message.player;
-  }
-  match a;
-  a.opponent = message.opponent;
-  a.maxmoveinterval = message.maxmoveinterval;
-  a.matchid = matchid;
-  a.white = white;
-  a.black = black;
-  a.status = 0;// 0 started 1 accepted 2 tie 3 game over 4 aborted?
-  a.lastmoveside = 1;// 0 white,1 black
-  a.moveswhite = 0;
-  a.movesblack = 0;
-  a.matchstart = 0;
-  a.check = 10;
-  a.kings[0] = 7;
-  a.kings[1] = 4;
-  a.kings[2] = 0;
-  a.kings[3] = 4;
+  matchrequest player;
+  player.opponent = message.opponent;
+  bool findrequested = RequestedTable::get(player, message.player);
+  assert(message.maxmoveinterval, "{\"reason\": \"You have to specify a max move interval in seconds.\"}");
+  assert(!findrequested, "{\"reason\": \"You already sent a match reuqest to this player.\"}");
+  player.matchid = now();
+  player.opponentside = (message.side) ? 0 : 1;
+  player.maxmoveinterval = message.maxmoveinterval;
+  player.lastmovetime = 0;
+  matchrequest opponent;
+  opponent.opponent = message.player;
+  opponent.matchid =  player.matchid;
+  opponent.opponentside = (!message.side) ? 0 : 1;
+  opponent.maxmoveinterval = message.maxmoveinterval;
+  opponent.lastmovetime = 0;
+  match newmatch;
+  newmatch.matchid = player.matchid;
+  bool findmatch = MatchTable::get(newmatch, message.player);
+  assert(!findmatch, "{\"reason\": \"You can only create one new match per second.\"}");
+  newmatch.white = (message.side) ? message.player : message.opponent;
+  newmatch.black = (message.side) ? message.opponent : message.player;
+  newmatch.opponent = message.opponent;
+  newmatch.maxmoveinterval = message.maxmoveinterval;
+  newmatch.status = 0;
+  newmatch.lastmoveside = 2;
+  newmatch.moveswhite = 0;
+  newmatch.movesblack = 0;
+  newmatch.matchstart = 0;
+  newmatch.check = 10;
+  newmatch.kings[0] = 7;
+  newmatch.kings[1] = 4;
+  newmatch.kings[2] = 0;
+  newmatch.kings[3] = 4;
   uint8_t new_board [8][8] = {
     {37, 35, 34, 32, 31, 34, 35, 33},
     {36, 36, 36, 36, 36, 36, 36, 36},
@@ -271,7 +320,7 @@ void newmatch(Newmatch_message message) {
   uint8_t b = 0;
   uint8_t g = 0;
   for (uint8_t i = 0; i < 64; i++) {
-    a.board[i] = new_board[g][b];
+    newmatch.board[i] = new_board[g][b];
     if (b == 7) {
       g++;
       b = 0;
@@ -279,49 +328,46 @@ void newmatch(Newmatch_message message) {
       b++;
     }
   }
-  a.lastmove[0] = 10;
-  a.lastmove[1] = 10;
-  a.lastmove[2] = 10;
-  a.lastmove[3] = 10;
-  a.lastmove[4] = 10;
-  a.castling[0] = 0;
-  a.castling[1] = 0;
-  a.castling[2] = 0;
-  a.castling[3] = 0;
-  bool res =  MainTable::store(a);
-  if (res == true) {
-    eosio::print( "Created new match", "\n" );
-    //requireNotice(N(Account1)); ?
-  } else {
-    eosio::print( "Could not create new match", "\n" );
-    //why?
-  }
+  newmatch.lastmove[0] = 10;
+  newmatch.lastmove[1] = 10;
+  newmatch.lastmove[2] = 10;
+  newmatch.lastmove[3] = 10;
+  newmatch.lastmove[4] = 10;
+  newmatch.castling[0] = 0;
+  newmatch.castling[1] = 0;
+  newmatch.castling[2] = 0;
+  newmatch.castling[3] = 0;
+  bool storerequested =  RequestedTable::store(player, message.player);
+  bool storerequest =  RequestTable::store(opponent, message.opponent);
+  bool storematch =  MatchTable::store(newmatch, message.player);
+  assert(storerequested && storerequest, "{\"reason\": \"Could not store match request.\"}");
+  assert(storematch, "{\"reason\": \"Something went wrong.\"}");
+  eosio::print("Created match and match request successfully");
 }
 
 void castling(Castling_message message) {
   eosio::require_auth( message.player );
   match query;
   query.matchid = message.matchid;
-  bool matchexist = MainTable::get(query);
-  assert( query.status == 1, "Match was not accepted or is already over" );
-  assert( matchexist, "Match not found!" );
-  assert( query.white == message.player || query.black == message.player, "Player not found!" );
-  uint8_t playerside;
-  (query.white == message.player) ?  playerside = 0 : playerside = 1;
-  assert( playerside != query.lastmoveside, "It's not your turn!" );
+  bool matchexist = MatchTable::get(query, message.host);
+  assert( query.status == 1, "{\"reason\": \"Match was not accepted or is already over.\"}");
+  assert( matchexist, "{\"reason\": \"Match not found!\"}");
+  assert( query.white == message.player || query.black == message.player, "{\"reason\": \"Player not found!\"}");
+  uint8_t playerside = (query.white == message.player) ?  0 : 1;
+  assert( playerside != query.lastmoveside, "{\"reason\": \"It's not your turn!\"}");
   uint8_t board[8][8];
   db_array_to_board(board, query.board);
   bool is_checked = false;
   if (message.type) { //if short castling
     if (!playerside) { //if white
-      assert(!query.castling[1] && !board[7][5] && !board[7][6], "Short castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
+      assert(!query.castling[1] && !board[7][5] && !board[7][6], "{\"reason\": \"Short castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between.\"}");
       detect_check(board, 7, 4, is_checked, 0);
-      assert( !is_checked, "Cannot castle while checked" );
+      assert( !is_checked, "{\"reason\": \"Cannot castle while checked.\"}");
       detect_check(board, 7, 5, is_checked, 0);
       detect_check(board, 7, 6, is_checked, 0);
-      assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
+      assert(!is_checked, "{\"reason\": \"Short castling is not possible because king would be checked while moving to the end position.\"}");
       detect_check(board, 7, 7, is_checked, 0);
-      assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
+      assert(!is_checked, "{\"reason\": \"Short castling is not possible because king would be checked at the end of the move.\"}");
       board[7][4] = 0;
       board[7][5] = 13;
       board[7][6] = 11;
@@ -331,14 +377,14 @@ void castling(Castling_message message) {
       query.kings[1] = 6;
     }
     else {
-      assert(!query.castling[3] && !board[0][5] && !board[0][6], "Short castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
+      assert(!query.castling[3] && !board[0][5] && !board[0][6], "{\"reason\": \"Short castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
       detect_check(board, 0, 4, is_checked, 1);
-      assert( !is_checked, "Cannot castle while checked" );
+      assert( !is_checked, "{\"reason\": \"Cannot castle while checked.\"}");
       detect_check(board, 0, 5, is_checked, 1);
       detect_check(board, 0, 6, is_checked, 1);
-      assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
+      assert(!is_checked, "{\"reason\": \"Short castling is not possible because king would be checked while moving to the end position.\"}");
       detect_check(board, 0, 7, is_checked, 1);
-      assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
+      assert(!is_checked, "{\"reason\": \"Short castling is not possible because king would be checked at the end of the move.\"}");
       board[0][4] = 0;
       board[0][5] = 33;
       board[0][6] = 31;
@@ -350,15 +396,15 @@ void castling(Castling_message message) {
   }
   else {
     if (!playerside) {
-      assert(!query.castling[0] && !board[7][1] && !board[7][2] && !board[7][3], "Long castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
+      assert(!query.castling[0] && !board[7][1] && !board[7][2] && !board[7][3], "{\"reason\": \"Long castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between.\"}");
       detect_check(board, 7, 4, is_checked, 0);
-      assert( !is_checked, "Cannot castle while checked" );
+      assert( !is_checked, "{\"reason\": \"Cannot castle while checked.\"}");
       detect_check(board, 7, 1, is_checked, 0);
       detect_check(board, 7, 2, is_checked, 0);
       detect_check(board, 7, 3, is_checked, 0);
-      assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
+      assert(!is_checked, "{\"reason\": \"Short castling is not possible because king would be checked while moving to the end position.\"}");
       detect_check(board, 7, 0, is_checked, 0);
-      assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
+      assert(!is_checked, "{\"reason\": \"Short castling is not possible because king would be checked at the end of the move.\"}");
       board[7][4] = 0;
       board[7][3] = 17;
       board[7][2] = 11;
@@ -369,15 +415,15 @@ void castling(Castling_message message) {
       query.kings[1] = 2;
     }
     else {
-      assert(!query.castling[2] && !board[0][1] && !board[0][2] && !board[0][3], "Long castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between");
+      assert(!query.castling[2] && !board[0][1] && !board[0][2] && !board[0][3], "{\"reason\": \"Long castling is not possible either because it has already been done or the rook or king have been moved or there are other pieces in between.\"}");
       detect_check(board, 0, 4, is_checked, 1);
-      assert( !is_checked, "Cannot castle while checked" );
+      assert( !is_checked, "{\"reason\": \"Cannot castle while checked.\"}");
       detect_check(board, 0, 1, is_checked, 1);
       detect_check(board, 0, 2, is_checked, 1);
       detect_check(board, 0, 3, is_checked, 1);
-      assert(!is_checked, "Short castling is not possible because king would be checked while moving to the end position");
+      assert(!is_checked, "{\"reason\": \"Short castling is not possible because king would be checked while moving to the end position.\"}");
       detect_check(board, 0, 0, is_checked, 1);
-      assert(!is_checked, "Short castling is not possible because king would be checked at the end of the move");
+      assert(!is_checked, "{\"reason\": \"Short castling is not possible because king would be checked at the end of the move.\"}");
       board[0][4] = 0;
       board[0][3] = 37;
       board[0][2] = 31;
@@ -401,21 +447,23 @@ void castling(Castling_message message) {
       b++;
     }
   }
-  bool res =  MainTable::update(query);
-  if (res == true) {
-    eosio::print( "saved castling move", "\n" );
-    //ask player2
-  } else {
-    eosio::print( "couldnt save castling move", "\n" );
-    //why?
-  }
+  matchrequest request;
+  matchrequest requested;
+  request.lastmovetime = query.lastmovetime;
+  requested.lastmovetime = query.lastmovetime;
+  request.opponent = message.host;
+  bool updaterequest =  RequestTable::update(request, query.opponent);
+  requested.opponent = query.opponent;
+  bool updaterequested =  RequestedTable::update(requested, message.host);
+  bool updatematch =  MatchTable::update(query, message.host);
+  assert(updaterequest && updaterequested && updatematch, "{\"reason\": \"Could not update match and request.\"}");
 }
 
 void movepiece(Move_message message) {
   eosio::require_auth( message.player );
   match query;
   query.matchid = message.matchid;
-  bool matchexist = MainTable::get(query);
+  bool matchexist = MatchTable::get(query, message.host);
   assert( query.status == 1, "Match was not accepted or is already over" );
   assert( matchexist, "Match not found!" );
   assert( query.white == message.player || query.black == message.player, "Player not found!" );
@@ -624,15 +672,16 @@ void movepiece(Move_message message) {
       b++;
     }
   }
-
-  bool res =  MainTable::update(query);
-  if (res == true) {
-    eosio::print( "saved move", "\n" );
-    //ask player2
-  } else {
-    eosio::print( "couldnt save move", "\n" );
-    //why?
-  }
+  matchrequest request;
+  matchrequest requested;
+  request.lastmovetime = query.lastmovetime;
+  requested.lastmovetime = query.lastmovetime;
+  request.opponent = message.host;
+  bool updaterequest =  RequestTable::update(request, query.opponent);
+  requested.opponent = query.opponent;
+  bool updaterequested =  RequestedTable::update(requested, message.host);
+  bool updatematch =  MatchTable::update(query, message.host);
+  assert(updaterequest && updaterequested && updatematch, "{\"reason\": \"Could not update match and request.\"}");
 }
 
 extern "C" {
@@ -645,25 +694,26 @@ extern "C" {
     if ( code == N(chess) ) {
       switch ( action ) {
       case N( newmatch ):
-        eosio::print("action newmatch ", "\n");
         newmatch( eosio::current_message<Newmatch_message>() );
         break;
       case N( acceptmatch ):
-        eosio::print("action acceptmatch ", "\n");
         acceptmatch( eosio::current_message<Acceptmatch_message>() );
         break;
+        case N( declinematch ):
+        declinematch( eosio::current_message<Acceptmatch_message>() );
+        break;
       case N( movepiece ):
-        eosio::print("action movepiece ", "\n");
         movepiece( eosio::current_message<Move_message>() );
         break;
       case N( castling ):
-        eosio::print("action castling ", "\n");
         castling( eosio::current_message<Castling_message>() );
         break;
       case N( claimwin ):
-        eosio::print("action claimwin ", "\n");
         claimwin( eosio::current_message<Claimwin_message>() );
         break;
+        case N( matchmaking ):
+          matchmaking( eosio::current_message<Matchmaking_message>() );
+          break;
       default :
         assert( false, "unknown action" );
       }
