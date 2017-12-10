@@ -12,12 +12,12 @@ struct PACKED( Newmatch_message ) {
 struct PACKED( Claimwin_message ) {
 	uint64_t matchid;
 	account_name player;
+	account_name host;
 };
 
 struct PACKED( Acceptmatch_message ) {
-	uint64_t matchid;
-	uint8_t accept; //1 accept
 	account_name player;
+	account_name opponent;
 };
 
 struct PACKED( Move_message ) {
@@ -25,22 +25,29 @@ struct PACKED( Move_message ) {
 	uint8_t steps_len = 17;
 	uint8_t steps[17];
 	account_name	player;
+	account_name host;
+};
+
+struct PACKED( Matchmaking_message ) {
+	account_name	player;
+	uint8_t status;
 };
 
 struct PACKED( matchrequest ) {
-	uint64_t requestid;
-	uint64_t matchid;
 	account_name opponent;
-	uint8_t	status;
+	uint64_t matchid;
 	uint8_t opponentside;
 	uint32_t maxmoveinterval;
+	uint32_t lastmovetime;
+	uint8_t status;
 	uint32_t matchstart;
 };
 
 struct PACKED( Castling_message ) {
 	uint64_t	matchid;
-	uint8_t 	type; //0 long castle, 1 short castle
+	uint8_t 	type;
 	account_name	player;
+	account_name	host;
 };
 
 struct PACKED( match ) {
@@ -66,8 +73,10 @@ struct PACKED( match ) {
 	uint8_t castling[4];// {long castle white, short castling white, long castle black, short castling black}
 };
 
+typedef eosio::table<N(chess), N(chess), N(matchmaking), Matchmaking_message, account_name> MatchMakingTable;
 typedef eosio::table<N(chess), N(chess), N(matches), match, uint64_t> MatchTable;
-typedef eosio::table<N(chess), N(chess), N(requests), matchrequest, uint64_t> RequestTable;
+typedef eosio::table<N(chess), N(chess), N(requests), matchrequest, account_name> RequestTable;
+typedef eosio::table<N(chess), N(chess), N(requested), matchrequest, account_name> RequestedTable;
 /*
 uint8_t FRESHBOARD [8][8] = {
 	{37, 35, 34, 32, 31, 34, 35, 33},

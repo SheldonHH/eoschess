@@ -1,4 +1,10 @@
 {
+  "types": [
+    {
+      "new_type_name": "account_name",
+      "type": "name"
+    }
+  ],
   "structs": [
     {
       "name": "movepiece",
@@ -6,7 +12,8 @@
       "fields": {
         "matchid": "uint64",
         "steps": "uint8[]",
-        "player": "account_name"
+        "player": "account_name",
+        "host": "account_name"
       }
     },
     {
@@ -15,16 +22,16 @@
       "fields": {
         "matchid": "uint64",
         "type": "uint8",
-        "player": "account_name"
+        "player": "account_name",
+        "host": "account_name"
       }
     },
     {
       "name": "acceptmatch",
       "base": "",
       "fields": {
-        "matchid": "uint64",
-        "accept": "uint8",
-        "player": "account_name"
+        "player": "account_name",
+        "opponent": "account_name"
       }
     },
     {
@@ -32,7 +39,16 @@
       "base": "",
       "fields": {
         "matchid": "uint64",
-        "player": "account_name"
+        "player": "account_name",
+        "host": "account_name"
+      }
+    },
+    {
+      "name": "matchmaking",
+      "base": "",
+      "fields": {
+        "player": "account_name",
+        "status": "uint8"
       }
     },
     {
@@ -69,12 +85,12 @@
     {
       "name": "matchrequest",
       "fields": {
-        "requestid": "uint64",
-        "matchid": "uint64",
-        "status": "uint8",
         "opponent": "account_name",
+        "matchid": "uint64",
         "opponentside": "uint8",
         "maxmoveinterval": "uint32",
+        "lastmovetime": "uint32",
+        "status": "uint8",
         "matchstart": "uint32"
       }
     }
@@ -93,8 +109,16 @@
       "type": "acceptmatch"
     },
     {
+      "action_name": "declinematch",
+      "type": "acceptmatch"
+    },
+    {
       "action_name": "claimwin",
       "type": "claimwin"
+    },
+    {
+      "action_name": "matchmaking",
+      "type": "matchmaking"
     },
     {
       "action_name": "castling",
@@ -118,10 +142,32 @@
       "type": "matchrequest",
       "index_type": "i64",
       "key_names": [
-        "requestid"
+        "opponent"
       ],
       "key_types": [
-        "uint64"
+        "account_name"
+      ]
+    },
+    {
+      "table_name": "requested",
+      "type": "matchrequest",
+      "index_type": "i64",
+      "key_names": [
+        "opponent"
+      ],
+      "key_types": [
+        "account_name"
+      ]
+    },
+    {
+      "table_name": "matchmaking",
+      "type": "matchmaking",
+      "index_type": "i64",
+      "key_names": [
+        "player"
+      ],
+      "key_types": [
+        "account_name"
       ]
     }
   ]
