@@ -2,9 +2,9 @@
  (type $FUNCSIG$vj (func (param i64)))
  (type $FUNCSIG$ijjjii (func (param i64 i64 i64 i32 i32) (result i32)))
  (type $FUNCSIG$vii (func (param i32 i32)))
- (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$ijjii (func (param i64 i64 i32 i32) (result i32)))
  (type $FUNCSIG$ijji (func (param i64 i64 i32) (result i32)))
+ (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$vi (func (param i32)))
  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
@@ -2788,7 +2788,7 @@
     (call $load_i64
      (get_local $2)
      (i64.const 4851938105189466112)
-     (i64.const -4995154566124142592)
+     (i64.const -4995154566354305024)
      (get_local $3)
      (i32.const 30)
     )
@@ -2804,23 +2804,21 @@
    )
    (i32.const 80)
   )
-  (i32.store8 offset=57
-   (get_local $3)
-   (i32.const 1)
-  )
   (i32.store offset=58 align=2
    (get_local $3)
-   (tee_local $0
-    (call $now)
-   )
+   (i32.const 0)
   )
-  (i32.store8 offset=25
+  (i32.store8 offset=57
    (get_local $3)
    (i32.const 1)
   )
   (i32.store offset=26 align=2
    (get_local $3)
-   (get_local $0)
+   (i32.const 0)
+  )
+  (i32.store8 offset=25
+   (get_local $3)
+   (i32.const 1)
   )
   (call $assert
    (i32.and
@@ -6400,6 +6398,30 @@
      )
      (i32.const 64)
     )
+   )
+  )
+  (block $label$47
+   (br_if $label$47
+    (i32.load offset=178 align=2
+     (get_local $36)
+    )
+   )
+   (i32.store align=2
+    (i32.add
+     (get_local $36)
+     (i32.const 178)
+    )
+    (tee_local $21
+     (call $now)
+    )
+   )
+   (i32.store offset=58 align=2
+    (get_local $36)
+    (get_local $21)
+   )
+   (i32.store offset=26 align=2
+    (get_local $36)
+    (get_local $21)
    )
   )
   (i32.store offset=53 align=1

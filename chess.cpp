@@ -207,7 +207,7 @@ void acceptmatch( Acceptmatch_message message ) {
   assert(findrequested, "{\"reason\": \"Could not find a request with that opponent.\"}");
   assert(!requested.status, "{\"reason\": \"The match has already started or is over.\"}");
   request.status = 1;
-  request.matchstart = now();
+  request.matchstart = 0;
   requested.status = 1;
   requested.matchstart = request.matchstart;
   bool updaterequest = RequestTable::update(request, message.player);
@@ -674,6 +674,11 @@ void movepiece(Move_message message) {
   }
   matchrequest request;
   matchrequest requested;
+  if (!query.matchstart) {
+    request.matchstart = now();
+    requested.matchstart = request.matchstart;
+    query.matchstart = request.matchstart;
+  }
   request.lastmovetime = query.lastmovetime;
   requested.lastmovetime = query.lastmovetime;
   request.opponent = message.host;
