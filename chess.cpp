@@ -279,7 +279,9 @@ void newmatch(Newmatch_message message) {
   bool findrequested = RequestedTable::get(player, message.player);
   assert(message.maxmoveinterval, "{\"reason\": \"You have to specify a max move interval in seconds.\"}");
   assert(!findrequested, "{\"reason\": \"You already sent a match reuqest to this player.\"}");
-  player.matchid = now();
+  match id;
+  int32_t findmatchid = back_i64( message.player, N(chess), N(matches), &id, sizeof(match) );
+  player.matchid = (id.matchid) ? id.matchid + 1 : 1;
   player.opponentside = (message.side) ? 0 : 1;
   player.maxmoveinterval = message.maxmoveinterval;
   player.lastmovetime = 0;
