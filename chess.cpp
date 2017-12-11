@@ -203,7 +203,7 @@ void acceptmatch( Acceptmatch_message message ) {
   assert(!request.status, "{\"reason\": \"The match has already started or is over.\"}");
   matchrequest requested;
   requested.opponent = message.player;
-  bool findrequested = RequestTable::get(requested, message.opponent);
+  bool findrequested = RequestedTable::get(requested, message.opponent);
   assert(findrequested, "{\"reason\": \"Could not find a request with that opponent.\"}");
   assert(!requested.status, "{\"reason\": \"The match has already started or is over.\"}");
   request.status = 1;
