@@ -358,6 +358,7 @@ void castling(Castling_message message) {
   assert( query.status == 1, "Match was not accepted or is already over.");
   assert( matchexist, "Match not found!");
   assert( query.white == message.player || query.black == message.player, "Player not found!");
+  assert( query.white == message.host || query.black == message.host, "Host not found!");
   uint8_t playerside = (query.white == message.player) ?  0 : 1;
   assert( playerside != query.lastmoveside, "It's not your turn!");
   uint8_t board[8][8];
@@ -461,11 +462,13 @@ void castling(Castling_message message) {
     request.opponentside = 1;
     requested.opponentside = 0;
   }
+  request.opponent = message.host;
   request.maxmoveinterval = query.maxmoveinterval;
   request.matchid = query.matchid;
   request.lastmovetime = query.lastmovetime;
   request.status = 1;
   request.matchstart = query.matchstart;
+  requested.opponent = query.opponent;
   requested.matchid = query.matchid;
   requested.lastmovetime = query.lastmovetime;
   requested.maxmoveinterval = query.maxmoveinterval;
