@@ -299,7 +299,7 @@ void newmatch(Newmatch_message message) {
   bool findmatch = MatchTable::get(newmatch, message.player);
   assert(!findmatch, "Could not find previous match");
   newmatch.white = (!message.side) ? message.player : message.opponent;
-  newmatch.black = (message.side) ? message.opponent : message.player;
+  newmatch.black = (!message.side) ? message.opponent : message.player;
   newmatch.opponent = message.opponent;
   newmatch.maxmoveinterval = message.maxmoveinterval;
   newmatch.status = 0;
